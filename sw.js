@@ -1,5 +1,5 @@
 // Xuyên Việt Ký - service worker
-const VERSION = 'xvk-v5';
+const VERSION = 'xvk-v6';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -16,7 +16,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   // Trang game: lấy bản mới nhất nếu có mạng, mất mạng thì dùng bản đã lưu
   if (req.mode === 'navigate' || (url.origin === location.origin)) {
-    e.respondWith(fetch(req).then(r => {
+    const fresh = new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' });
+    e.respondWith(fetch(fresh).then(r => {
       const copy = r.clone(); caches.open(VERSION).then(c => c.put(req, copy)); return r;
     }).catch(() => caches.match(req).then(r => r || caches.match('./index.html'))));
     return;
