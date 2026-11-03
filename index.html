@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Xuyên Việt Ký</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticky HUD band on top; S-shaped map beside an action panel on desktop, stacked on phones */
+:root{
+  --bg:#EDF1EA; --surface:#FFFFFF; --surface-2:#E4EAE2; --ink:#1B2622; --muted:#5A6A63; --line:#CAD4CB;
+  --jade:#1E6B58; --jade-soft:#D3E7DF; --sun:#D99A12; --sun-soft:#FBEFCF; --red:#BF3328; --red-soft:#F6DCD8;
+  --sea:#D5E6E8; --land:#F8F5E7; --land-line:#93A99C; --on-accent:#FFFFFF;
+  --f-display:'Bungee','Be Vietnam Pro',system-ui,sans-serif;
+  --f-body:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101715; --surface:#18211E; --surface-2:#212C28; --ink:#E4ECE7; --muted:#93A49C; --line:#2F3D37;
+  --jade:#4DB596; --jade-soft:#1C3A31; --sun:#F0B53A; --sun-soft:#3A2F14; --red:#E5594C; --red-soft:#3E1F1C;
+  --sea:#132629; --land:#1F2B26; --land-line:#4A6359; --on-accent:#0E1513; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101715; --surface:#18211E; --surface-2:#212C28; --ink:#E4ECE7; --muted:#93A49C; --line:#2F3D37;
+  --jade:#4DB596; --jade-soft:#1C3A31; --sun:#F0B53A; --sun-soft:#3A2F14; --red:#E5594C; --red-soft:#3E1F1C;
+  --sea:#132629; --land:#1F2B26; --land-line:#4A6359; --on-accent:#0E1513; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.hud-in{max-width:1180px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px}
+.brand{font-family:var(--f-display);font-size:20px;letter-spacing:.02em;color:var(--jade);line-height:1}
+.brand small{display:block;font-family:var(--f-body);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px;font-weight:600}
+.who{display:flex;align-items:center;gap:10px;min-width:0}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--red);color:var(--on-accent);display:grid;place-items:center;font-family:var(--f-display);font-size:16px;flex:none}
+.who b{display:block;font-size:14px;line-height:1.2}
+.who span{font-size:12px;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin-left:auto}
+.stat{display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat label{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.stat .v{font-family:var(--f-mono);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.bar{width:110px;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade);transition:width .3s}
+.bar.e i{background:var(--sun)}
+.ghost{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--muted)}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+
+.wrap{max-width:1180px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:18px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+.mapbox{background:var(--sea);border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.mapbox svg{display:block;width:100%;height:auto;max-height:78vh}
+.maphint{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.land{fill:var(--land);stroke:var(--land-line);stroke-width:1.4;stroke-linejoin:round}
+.route{fill:none;stroke:var(--red);stroke-width:2.2;stroke-dasharray:5 5;stroke-linecap:round;opacity:.85}
+.city{cursor:pointer}
+.city circle.dot{fill:var(--surface);stroke:var(--jade);stroke-width:2.2}
+.city.v circle.dot{fill:var(--jade)}
+.city.dest circle.dot{stroke:var(--sun);stroke-width:3.2}
+.city text{font-size:12.5px;font-weight:600;fill:var(--ink);paint-order:stroke;stroke:var(--land);stroke-width:3.5px;stroke-linejoin:round}
+.city:hover text{fill:var(--jade)}
+.here-ring{fill:none;stroke:var(--red);stroke-width:2.5}
+.pulse{fill:var(--red);opacity:.25;transform-box:fill-box;transform-origin:center;animation:pulse 1.8s ease-out infinite}
+@keyframes pulse{from{transform:scale(.6);opacity:.45}to{transform:scale(2.2);opacity:0}}
+.isl text{font-size:11px;fill:var(--muted);font-weight:600;font-style:italic}
+.isl circle{fill:var(--land-line)}
+.compass{font-family:var(--f-display);font-size:13px;fill:var(--muted)}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.tabs button{flex:1;background:none;border:0;padding:11px 6px;font-size:13.5px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--red);background:var(--surface)}
+.pbody{padding:18px;display:flex;flex-direction:column;gap:18px}
+
+.cityhead h2{font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1.1;margin:0;color:var(--ink);text-wrap:balance}
+.cityhead .prov{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--jade);font-weight:700;margin-top:6px}
+.cityhead p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.sec h3{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:700}
+.rows{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:600;font-size:14.5px;line-height:1.3}
+.row .t span{font-size:12.5px;color:var(--muted)}
+.btn{border:0;border-radius:8px;padding:8px 12px;font-weight:600;font-size:13.5px;background:var(--jade);color:var(--on-accent);white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.sun{background:var(--sun);color:#1B1606}
+.btn.out{background:none;border:1.5px solid var(--jade);color:var(--jade)}
+.btn:disabled{background:var(--surface-2);color:var(--muted);cursor:not-allowed;filter:none;border-color:transparent}
+.chip{font-size:12px;font-weight:700;color:var(--jade);background:var(--jade-soft);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.chip.red{color:var(--red);background:var(--red-soft)}
+.quiz{border:1px dashed var(--sun);background:var(--sun-soft);border-radius:10px;padding:12px}
+.quiz b{display:block;margin-bottom:8px}
+.qopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:420px){.qopts{grid-template-columns:1fr}}
+.qopts button{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;text-align:left;font-size:13.5px}
+.qopts button:hover{border-color:var(--sun)}
+.rest{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rest button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px}
+.rest button b{display:block;font-size:14px}
+.rest button span{font-size:12.5px;color:var(--muted)}
+.rest button:hover{border-color:var(--jade)}
+.rest button:disabled{opacity:.5;cursor:not-allowed}
+
+.dlist{display:flex;flex-direction:column;gap:6px}
+.dest{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;text-align:left;width:100%}
+.dest:hover{border-color:var(--jade)}
+.dest.sel{border-color:var(--sun);background:var(--sun-soft)}
+.dest b{flex:1;font-weight:600}
+.dest .km{font-size:12.5px;color:var(--muted)}
+.vtag{width:9px;height:9px;border-radius:50%;border:2px solid var(--jade);flex:none}
+.vtag.on{background:var(--jade)}
+.modes{display:flex;flex-direction:column;gap:8px}
+.mode{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.mode b{font-size:14.5px}
+.mode .meta{grid-column:1;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.mode .btn{grid-row:1 / span 2;grid-column:2}
+.mode .why{grid-column:1 / -1;font-size:12px;color:var(--red)}
+
+.stamps{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:12px}
+.stamp{border:2px dashed var(--line);border-radius:12px;padding:12px 8px;text-align:center;min-height:118px;display:flex;flex-direction:column;justify-content:center;gap:4px;color:var(--muted)}
+.stamp.on{border:2.5px double var(--red);color:var(--red);transform:rotate(-3deg);background:var(--red-soft)}
+.stamp:nth-child(even).on{transform:rotate(2.5deg)}
+.stamp .sn{font-family:var(--f-display);font-size:14px;line-height:1.15}
+.stamp .sd{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.stamp .sp{font-size:11.5px;color:var(--muted)}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.summary div{background:var(--surface-2);border-radius:10px;padding:10px}
+.summary b{display:block;font-family:var(--f-mono);font-size:20px}
+.summary span{font-size:12px;color:var(--muted)}
+.log{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.log div{padding:6px 0 6px 14px;position:relative;font-size:14px}
+.log div::before{content:"";position:absolute;left:-6px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--jade)}
+.log div.bad::before{border-color:var(--red)}
+.log div.good::before{border-color:var(--sun)}
+.log time{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-right:8px}
+.note{font-size:12px;color:var(--muted)}
+.win{background:var(--jade);color:var(--on-accent);border-radius:10px;padding:14px}
+.win b{font-family:var(--f-display);font-weight:400;font-size:18px;display:block}
+
+.toast{z-index:50!important;position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;max-width:min(92vw,520px);opacity:0;pointer-events:none;transition:.25s;z-index:30}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.modal{position:fixed;inset:0;z-index:40;background:rgba(10,20,16,.55);display:grid;place-items:center;padding:16px;overflow:auto}
+.card{background:var(--surface);color:var(--ink);border-radius:16px;max-width:560px;width:100%;padding:22px;display:flex;flex-direction:column;gap:16px;border:1px solid var(--line)}
+.card h1{font-family:var(--f-display);font-weight:400;font-size:30px;line-height:1.05;margin:0;color:var(--jade)}
+.card .lead{margin:0;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.field input,.field select{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.arch{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:440px){.arch{grid-template-columns:1fr}}
+.arch label{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:block}
+.arch input{position:absolute;opacity:0;pointer-events:none}
+.arch label:has(input:checked){border-color:var(--red);background:var(--red-soft)}
+.arch label:has(input:focus-visible){outline:2px solid var(--sun);outline-offset:2px}
+.arch b{display:block;font-size:14.5px}
+.arch span{font-size:12.5px;color:var(--muted)}
+.cta{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.btn.big{padding:12px 20px;font-size:15px}
+/* Nhân vật & cảnh */
+.hero-g{pointer-events:none}
+.lg,.arm{transform-box:fill-box;transform-origin:50% 0}
+.walk .l1{animation:legA .32s ease-in-out infinite alternate}
+.walk .l2{animation:legA .32s ease-in-out infinite alternate-reverse}
+.walk .a1{animation:legA .32s ease-in-out infinite alternate-reverse}
+@keyframes legA{from{transform:rotate(28deg)}to{transform:rotate(-28deg)}}
+.riding .legs{display:none}
+.bob{animation:bob .22s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-1.2px)}}
+.breathe{animation:breathe 2.6s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateY(-1.2px)}}
+.wave .a2{animation:wave .45s ease-in-out infinite alternate}
+@keyframes wave{from{transform:rotate(-150deg)}to{transform:rotate(-110deg)}}
+.raise .a2{transform:rotate(-140deg)}
+.flash{animation:flash .9s ease-out 2}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+.steam{animation:steam 1.4s ease-in-out infinite}
+@keyframes steam{0%{opacity:0;transform:translateY(2px)}50%{opacity:.8}100%{opacity:0;transform:translateY(-5px)}}
+.zzz{animation:zzz 1.6s ease-in-out infinite}
+@keyframes zzz{0%{opacity:0;transform:translate(0,4px)}50%{opacity:1}100%{opacity:0;transform:translate(6px,-8px)}}
+.pop{animation:pop .3s ease-out}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.pop,.flash,.steam,.zzz{transform-box:fill-box;transform-origin:center}
+.scene{border-radius:12px;overflow:hidden;border:1px solid var(--line);margin:-4px 0 0}
+.scene svg{display:block;width:100%;height:auto}
+.scene-cap{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);padding:6px 2px 0}
+.mapbox.traveling .maphint{background:var(--sun-soft);border-color:var(--sun);color:var(--ink);font-weight:600}
+/* Bưu thiếp ảnh */
+.pc{background:var(--surface);color:var(--ink);border-radius:16px;max-width:520px;width:100%;overflow:hidden;border:1px solid var(--line);box-shadow:0 20px 50px rgba(0,0,0,.28)}
+.pframe{position:relative;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden;max-width:100%}
+.pframe>svg,.pframe>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+img.ph{opacity:0;transition:opacity .45s}
+img.ph.ok{opacity:1}
+.ptag{position:absolute;left:12px;top:12px;background:var(--red);color:#fff;font:700 11px/1 var(--f-body);letter-spacing:.12em;padding:6px 10px;border-radius:4px}
+.ptag.food{background:var(--sun);color:#1B1606}
+.psrc{position:absolute;right:10px;top:12px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 9px;border-radius:999px}
+.sticker{position:absolute;right:12px;bottom:12px;width:88px;height:88px;border-radius:50%;background:#DDF2FA;border:3px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.3);overflow:hidden}
+.sticker svg{width:100%;height:100%;display:block}
+.pcb{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px}
+.pcb h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;line-height:1.15;text-wrap:balance}
+.pcb .meta{color:var(--muted);font-size:13.5px}
+.pcb .credit{font-size:12px;color:var(--muted);min-height:1em}
+.pcb .credit a{color:var(--jade)}
+.pcb .cta{margin-top:8px}
+.album{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.album button{padding:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface-2);text-align:left;min-width:0}
+.album .th{position:relative;aspect-ratio:1;overflow:hidden}
+.album .th>svg,.album .th>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.album span{display:block;font-size:11.5px;padding:5px 6px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.walkin{animation:walkin 1.4s ease-out both}
+@keyframes walkin{from{transform:translateX(-150px)}to{transform:translateX(0)}}
+.fadein{animation:fadein .45s ease both}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header class="hud"><div class="hud-in" id="hud"></div></header>
+<main class="wrap">
+  <section class="mapbox" aria-label="Bản đồ Việt Nam">
+    <div id="map"></div>
+    <div class="maphint" id="maphint">Chạm vào một điểm để chọn nơi đến</div>
+  </section>
+  <section class="panel" aria-label="Bảng hành động">
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="pbody" id="pbody"></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="modalRoot"></div>
+
+<script>
+// ===== DỮ LIỆU ĐIỂM ĐẾN (giá tham khảo trong game) =====
+// L: [tên, giá vé, năng lượng (âm = hồi), số giờ]  F: [món, giá]
+const C=[
+ {id:'hanoi',n:'Hà Nội',p:'TP. Hà Nội',lon:105.85,lat:21.03,lb:[-10,-4,'end'],rail:1,air:1,stay:250000,
+  intro:'Thủ đô ngàn năm văn hiến, phố cổ 36 phố phường và những quán phở sớm mai.',
+  L:[['Hồ Hoàn Kiếm & cầu Thê Húc',0,10,2],['Văn Miếu – Quốc Tử Giám',70000,10,2],['Phố cổ & cà phê trứng',35000,8,2]],
+  F:[['Phở bò',55000],['Bún chả',50000]],job:['Phụ bán quán phở phố cổ',220000],
+  q:['Văn Miếu được xây dựng vào năm nào?',['1070','1010','1428','1802'],0]},
+ {id:'halong',n:'Hạ Long',p:'Quảng Ninh',lon:107.08,lat:20.95,lb:[9,4,'start'],rail:0,air:1,stay:300000,
+  intro:'Hàng nghìn đảo đá vôi nhô lên giữa làn nước xanh ngọc.',
+  L:[['Du thuyền ngắm vịnh',350000,12,4],['Chèo kayak qua hang Luồn',150000,20,2],['Leo đỉnh đảo Ti Tốp',50000,20,2]],
+  F:[['Chả mực Hạ Long',90000],['Bánh cuốn chả mực',45000]],job:['Phụ bếp nhà hàng hải sản',230000],
+  q:['Vịnh Hạ Long được UNESCO công nhận Di sản Thiên nhiên Thế giới lần đầu năm nào?',['1994','2000','1999','2014'],0]},
+ {id:'sapa',n:'Sa Pa',p:'Lào Cai',lon:103.84,lat:22.34,lb:[-11,4,'end'],rail:1,air:0,stay:250000,
+  intro:'Thị trấn trong sương, ruộng bậc thang và đỉnh núi cao nhất Đông Dương.',
+  L:[['Lên đỉnh Fansipan bằng cáp treo',800000,20,5],['Bản Cát Cát',150000,15,3],['Thung lũng Mường Hoa',75000,20,3]],
+  F:[['Lẩu cá hồi',180000],['Thịt lợn cắp nách nướng',120000]],job:['Phụ homestay đón khách',180000],
+  q:['Đỉnh Fansipan được mệnh danh là gì?',['Nóc nhà Đông Dương','Mái nhà thế giới','Cổng trời phương Bắc','Đệ nhất hùng quan'],0]},
+ {id:'hagiang',n:'Hà Giang',p:'Tuyên Quang (Hà Giang cũ)',lon:104.98,lat:22.82,lb:[9,-3,'start'],rail:0,air:0,stay:200000,
+  intro:'Cao nguyên đá, những cung đèo uốn lượn và mùa hoa tam giác mạch.',
+  L:[['Cột cờ Lũng Cú',25000,20,2],['Đèo Mã Pí Lèng & sông Nho Quế',0,25,3],['Dinh thự họ Vương',25000,10,2]],
+  F:[['Cháo ấu tẩu',40000],['Bánh cuốn trứng',30000]],job:['Chạy xe ôm chở khách qua đèo',200000],
+  q:['Cột cờ Lũng Cú đánh dấu điểm cực nào của Việt Nam?',['Cực Bắc','Cực Tây','Cực Đông','Cực Nam'],0]},
+ {id:'ninhbinh',n:'Ninh Bình',p:'Ninh Bình',lon:105.97,lat:20.25,lb:[9,8,'start'],rail:1,air:0,stay:220000,
+  intro:'Vịnh Hạ Long trên cạn, thuyền len lỏi giữa núi đá và hang động.',
+  L:[['Đi thuyền Tràng An',250000,10,3],['Chùa Bái Đính',0,15,2],['Leo Hang Múa ngắm Tam Cốc',100000,25,2]],
+  F:[['Cơm cháy chà bông',60000],['Dê núi tái chanh',160000]],job:['Chèo thuyền phụ tại bến',200000],
+  q:['Quần thể danh thắng Tràng An là loại di sản nào?',['Di sản hỗn hợp văn hóa – thiên nhiên','Di sản phi vật thể','Di sản tư liệu','Công viên địa chất'],0]},
+ {id:'phongnha',n:'Phong Nha',p:'Quảng Trị (Quảng Bình cũ)',lon:106.28,lat:17.59,lb:[-10,4,'end'],rail:1,air:1,stay:230000,
+  intro:'Vương quốc hang động, nơi có hang Sơn Đoòng lớn nhất thế giới.',
+  L:[['Động Phong Nha (đi thuyền)',150000,15,3],['Động Thiên Đường',250000,20,3],['Suối Nước Moọc',80000,10,2]],
+  F:[['Cháo canh',30000],['Bánh bột lọc',30000]],job:['Phụ hướng dẫn tour hang động',230000],
+  q:['Hang động lớn nhất thế giới ở Phong Nha – Kẻ Bàng tên là gì?',['Sơn Đoòng','Hang Én','Động Thiên Đường','Hang Tối'],0]},
+ {id:'hue',n:'Huế',p:'TP. Huế',lon:107.59,lat:16.46,lb:[-10,0,'end'],rail:1,air:1,stay:230000,
+  intro:'Cố đô trầm mặc bên dòng Hương, lăng tẩm và nhã nhạc cung đình.',
+  L:[['Đại Nội Huế',200000,15,3],['Lăng Khải Định',150000,10,2],['Chùa Thiên Mụ',0,10,1]],
+  F:[['Bún bò Huế',45000],['Cơm hến',25000]],job:['Phụ bán chè Huế',180000],
+  q:['Triều đại phong kiến cuối cùng của Việt Nam, đóng đô ở Huế, là?',['Nhà Nguyễn','Nhà Lê','Nhà Trần','Nhà Tây Sơn'],0]},
+ {id:'danang',n:'Đà Nẵng',p:'TP. Đà Nẵng',lon:108.22,lat:16.05,lb:[9,-5,'start'],rail:1,air:1,stay:280000,
+  intro:'Thành phố của những cây cầu, biển Mỹ Khê và núi Ngũ Hành.',
+  L:[['Xem Cầu Rồng phun lửa',0,5,2],['Ngũ Hành Sơn',40000,20,2],['Bà Nà Hills & Cầu Vàng',950000,25,6]],
+  F:[['Mì Quảng',40000],['Bánh tráng cuốn thịt heo',80000]],job:['Phục vụ quán hải sản ven biển',250000],
+  q:['Cầu Rồng phun lửa, phun nước vào tối những ngày nào?',['Thứ Bảy và Chủ nhật','Thứ Hai','Chỉ ngày lễ','Ngày rằm'],0]},
+ {id:'hoian',n:'Hội An',p:'TP. Đà Nẵng (Quảng Nam cũ)',lon:108.33,lat:15.88,lb:[9,12,'start'],rail:0,air:0,stay:250000,
+  intro:'Phố cổ đèn lồng, mái ngói rêu phong bên sông Hoài.',
+  L:[['Chùa Cầu & phố cổ',120000,10,2],['Thả đèn hoa đăng sông Hoài',30000,5,1],['Đi thúng rừng dừa Bảy Mẫu',150000,15,2]],
+  F:[['Cao lầu',40000],['Bánh mì Hội An',35000]],job:['Bán đèn lồng ở chợ đêm',200000],
+  q:['Phố cổ Hội An được UNESCO công nhận Di sản Văn hóa Thế giới năm nào?',['1999','1993','2003','2010'],0]},
+ {id:'quynhon',n:'Quy Nhơn',p:'Gia Lai (Bình Định cũ)',lon:109.22,lat:13.77,lb:[9,4,'start'],rail:1,air:1,stay:230000,
+  intro:'Biển hoang sơ, tháp Chăm cổ và vùng đất võ.',
+  L:[['Eo Gió',25000,15,2],['Cano ra bãi Kỳ Co',300000,10,4],['Tháp Đôi',0,5,1]],
+  F:[['Bánh xèo tôm nhảy',50000],['Bún chả cá',35000]],job:['Phụ ghe đánh cá buổi sáng',220000],
+  q:['Bình Định từ lâu được gọi là "đất" gì?',['Đất võ','Đất học','Đất thép','Đất lành'],0]},
+ {id:'nhatrang',n:'Nha Trang',p:'Khánh Hòa',lon:109.19,lat:12.24,lb:[9,4,'start'],rail:1,air:1,stay:280000,
+  intro:'Vịnh biển đẹp, đảo san hô và tháp Chăm nghìn năm.',
+  L:[['Tháp Bà Ponagar',30000,10,1],['Tour 4 đảo',350000,20,6],['Tắm bùn khoáng nóng',300000,-15,2]],
+  F:[['Bánh căn',40000],['Nem nướng Ninh Hòa',60000]],job:['Cho thuê dù trên bãi biển',230000],
+  q:['Tháp Bà Ponagar là công trình của nền văn hóa nào?',['Chăm Pa','Óc Eo','Đông Sơn','Sa Huỳnh'],0]},
+ {id:'dalat',n:'Đà Lạt',p:'Lâm Đồng',lon:108.44,lat:11.94,lb:[-10,4,'end'],rail:0,air:1,stay:250000,
+  intro:'Thành phố sương mù, đồi thông và những vườn hoa quanh năm.',
+  L:[['Hồ Xuân Hương & chợ đêm',0,5,2],['Thiền viện Trúc Lâm',0,10,2],['Máng trượt thác Datanla',200000,15,2]],
+  F:[['Bánh tráng nướng',25000],['Lẩu gà lá é',250000]],job:['Hái dâu ở nhà vườn',180000],
+  q:['Đà Lạt có biệt danh nổi tiếng là?',['Thành phố ngàn hoa','Thành phố hoa phượng đỏ','Thành phố biển','Thành phố cảng'],0]},
+ {id:'muine',n:'Mũi Né',p:'Lâm Đồng (Bình Thuận cũ)',lon:108.29,lat:10.95,lb:[9,10,'start'],rail:1,air:0,stay:250000,
+  intro:'Đồi cát vàng, làng chài và mùi nước mắm thơm lừng.',
+  L:[['Đồi cát trắng (xe jeep)',300000,15,3],['Suối Tiên',0,15,2],['Làng chài lúc bình minh',0,10,1]],
+  F:[['Lẩu thả',220000],['Dông nướng',120000]],job:['Phụ phơi cá ở làng chài',180000],
+  q:['Phan Thiết nổi tiếng với đặc sản nào?',['Nước mắm','Cà phê','Trà','Rượu cần'],0]},
+ {id:'hcm',n:'TP.HCM',p:'TP. Hồ Chí Minh',lon:106.70,lat:10.78,lb:[-10,-5,'end'],rail:1,air:1,stay:300000,
+  intro:'Thành phố không ngủ, năng động và đầy món ngon đường phố.',
+  L:[['Dinh Độc Lập',65000,10,2],['Chợ Bến Thành',0,10,2],['Địa đạo Củ Chi',125000,20,4]],
+  F:[['Cơm tấm',45000],['Hủ tiếu Nam Vang',50000],['Bánh mì Sài Gòn',25000]],job:['Shipper giao đồ ăn',260000],
+  q:['Dinh Độc Lập còn có tên gọi khác là?',['Hội trường Thống Nhất','Dinh Gia Long','Nhà hát Lớn','Bến Nhà Rồng'],0]},
+ {id:'cantho',n:'Cần Thơ',p:'TP. Cần Thơ',lon:105.78,lat:10.03,lb:[9,13,'start'],rail:0,air:1,stay:220000,
+  intro:'Thủ phủ miền Tây sông nước, chợ nổi và vườn trái cây.',
+  L:[['Chợ nổi Cái Răng lúc bình minh',150000,10,3],['Nhà cổ Bình Thủy',15000,5,1],['Bến Ninh Kiều về đêm',0,5,1]],
+  F:[['Lẩu mắm',200000],['Bánh tét lá cẩm',30000]],job:['Phụ bán trái cây trên ghe',200000],
+  q:['Trên chợ nổi, cây sào "bẹo" treo nông sản dùng để làm gì?',['Cho khách biết ghe bán món gì','Đuổi chim','Làm cột buồm','Đánh dấu chủ ghe'],0]},
+ {id:'phuquoc',n:'Phú Quốc',p:'An Giang (Kiên Giang cũ)',lon:103.97,lat:10.23,lb:[-10,4,'end'],rail:0,air:1,island:1,stay:350000,
+  intro:'Đảo ngọc với biển xanh, hoàng hôn và nước mắm nhĩ.',
+  L:[['Cáp treo Hòn Thơm',600000,10,4],['Tắm biển Bãi Sao',0,-10,2],['Chợ đêm Phú Quốc',0,5,2]],
+  F:[['Gỏi cá trích',120000],['Bún quậy',50000]],job:['Phục vụ resort ven biển',280000],
+  q:['Đảo lớn nhất Việt Nam là?',['Phú Quốc','Cát Bà','Côn Đảo','Lý Sơn'],0]},
+];
+const BY=Object.fromEntries(C.map(c=>[c.id,c]));
+
+const ARCH={
+ phuot:{n:'Phượt thủ',d:'2.000.000đ. Đi xe máy rẻ hơn 40%, ít mệt hơn.',money:2000000,maxE:100},
+ sinhvien:{n:'Sinh viên',d:'1.200.000đ. Làm thêm +40%, đố vui thưởng gấp đôi.',money:1200000,maxE:100},
+ foodie:{n:'Food reviewer',d:'1.800.000đ. Ăn đặc sản hồi nhiều sức và có tiền review.',money:1800000,maxE:100},
+ vanphong:{n:'Dân văn phòng',d:'3.500.000đ. Nhiều tiền nhưng thể lực tối đa chỉ 80.',money:3500000,maxE:80},
+};
+
+const EV=[
+ ['Gặp đoàn phượt tốt bụng, được bao bữa trưa',0,10,0],
+ ['Xe hỏng dọc đường, tốn tiền sửa',-80000,-5,1],
+ ['Trúng vé số giải an ủi',200000,0,0],
+ ['Quên áo mưa, dính trận mưa lớn',0,-10,0],
+ ['Người dân chỉ quán ngon giá rẻ',40000,5,0],
+ ['Kẹt xe gần 2 tiếng',0,-5,2],
+ ['Kết bạn với du khách, được mời cà phê',0,8,0],
+ ['Đánh rơi ít tiền lẻ ở trạm dừng',-50000,0,0],
+];
+
+// ===== TRẠNG THÁI =====
+const KEY='xuyenvietky.v1';
+let S=null;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){return null}}
+
+const vnd=n=>Math.round(n).toLocaleString('vi-VN')+'đ';
+const dayOf=h=>Math.floor(h/24)+1;
+const clock=h=>{const m=Math.round((h%24)*60);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const stamp=()=>'N'+dayOf(S.hours)+' '+clock(S.hours);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function hav(a,b){const R=6371,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;
+ const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+const roadKm=(a,b)=>Math.round(hav(a,b)*1.25);
+const total=()=>C.length+C.reduce((s,c)=>s+c.L.length+c.F.length,0);
+const doneCount=()=>Object.keys(S.visited).length+Object.keys(S.done).length;
+
+function newGame(name,arch,start){
+ const A=ARCH[arch];
+ S={name:name||'Lữ khách',arch,money:A.money,maxE:A.maxE,energy:A.maxE,hours:8,city:start,
+    visited:{[start]:1},done:{},quiz:{},work:{},route:[start],log:[],tab:'here',dest:null};
+ addLog('Bắt đầu hành trình xuyên Việt tại '+BY[start].n+' với '+vnd(A.money)+'.','good');
+ save();render();
+}
+function addLog(t,cls=''){S.log.unshift({d:stamp(),t,c:cls});S.log=S.log.slice(0,60)}
+
+let tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2600)}
+
+// ===== DI CHUYỂN =====
+function modes(a,b){
+ const km=roadKm(a,b),isl=a.island||b.island,out=[];
+ const r=v=>Math.round(v/1000)*1000, h2=v=>Math.round(v*2)/2;
+ let c=km*500,e=km/18,h=km/40;
+ if(S.arch==='phuot'){c*=.6;e*=.7}
+ if(isl){c+=350000;h+=3}
+ out.push({k:'moto',n:'Xe máy',sub:isl?'kèm phà ra đảo':'tự lái, đi phượt',c:r(c),e:Math.ceil(e),h:h2(h)});
+ c=60000+km*850;e=km/45+3;h=km/45+.5;if(isl){c+=330000;h+=3}
+ out.push({k:'bus',n:'Xe khách',sub:isl?'kèm tàu cao tốc':'giường nằm',c:r(c),e:Math.ceil(e),h:h2(h)});
+ if(a.rail&&b.rail&&!isl) out.push({k:'train',n:'Tàu hỏa',sub:'tuyến Thống Nhất',c:r(50000+km*1000),e:Math.ceil(km/90+2),h:h2(km/48+.5)});
+ if(a.air&&b.air&&km>300) out.push({k:'plane',n:'Máy bay',sub:'vé phổ thông',c:r(500000+km*450),e:8,h:h2(2.5+km/750)});
+ return {km,list:out};
+}
+let busy=false;
+const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function travel(k){
+ if(busy)return;
+ const a=BY[S.city],b=BY[S.dest];if(!b)return;
+ const m=modes(a,b).list.find(x=>x.k===k);if(!m)return;
+ if(S.money<m.c)return toast('Không đủ tiền. Hãy làm thêm hoặc chọn phương tiện rẻ hơn.');
+ if(S.energy<m.e)return toast('Không đủ năng lượng. Nghỉ ngơi trước khi đi.');
+ if(REDUCE)return arrive(a,b,m);
+ busy=true;
+ const start=()=>animateTravel(a,b,m,()=>{busy=false;arrive(a,b,m)});
+ if(innerWidth<=860){document.querySelector('.mapbox').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(start,450)}else start();
+}
+function animateTravel(a,b,m,done){
+ const box=document.querySelector('.mapbox'),hint=document.getElementById('maphint'),hero=document.getElementById('hero');
+ const [x1,y1]=px(a.lon,a.lat),[x2,y2]=px(b.lon,b.lat),dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);
+ const dur=Math.max(1600,Math.min(3600,1200+len*7)),flip=dx<0,plane=m.k==='plane';
+ const arcH=plane?Math.min(70,len*.3):Math.min(14,len*.06);
+ box.classList.add('traveling');hint.textContent='Đang đi '+m.n.toLowerCase()+' đến '+b.n+'…';
+ const svg=box.querySelector('svg');
+ svg.querySelectorAll('.pulse,.here-ring').forEach(e=>e.remove());
+ const trail=document.createElementNS('http://www.w3.org/2000/svg','polyline');trail.setAttribute('class','route');svg.insertBefore(trail,hero);
+ hero.innerHTML='<g transform="scale(1.35)">'+vehicleSVG(m.k,flip)+'</g>';
+ const veh=hero.querySelector('.veh');let pts=[];const t0=performance.now();
+ (function step(now){
+  const t=Math.min(1,(now-t0)/dur),p=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const off=-Math.sin(Math.PI*p)*arcH,x=x1+dx*p,y=y1+dy*p+off;
+  hero.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)})`);
+  if(plane){const dOff=-Math.PI*Math.cos(Math.PI*p)*arcH,ang=Math.atan2(dy+dOff,dx)*180/Math.PI;
+   veh.setAttribute('transform',flip?`rotate(${ang+180}) scale(-1,1)`:`rotate(${ang})`)}
+  pts.push(x.toFixed(1)+','+y.toFixed(1));trail.setAttribute('points',pts.join(' '));
+  if(t<1)requestAnimationFrame(step);else setTimeout(()=>{box.classList.remove('traveling');done()},300);
+ })(t0);
+}
+function arrive(a,b,m){
+ S.money-=m.c;S.energy-=m.e;S.hours+=m.h;S.city=b.id;S.route.push(b.id);
+ const first=!S.visited[b.id];if(first)S.visited[b.id]=dayOf(S.hours);
+ addLog('Đi '+m.n.toLowerCase()+' từ '+a.n+' đến '+b.n+' ('+vnd(m.c)+', '+m.h+' giờ).');
+ let msg='Đã đến '+b.n+(first?'. Nhận dấu hộ chiếu mới!':'.');
+ if(Math.random()<.35){const ev=EV[Math.floor(Math.random()*EV.length)];
+  S.money=Math.max(0,S.money+ev[1]);S.energy=Math.max(0,Math.min(S.maxE,S.energy+ev[2]));S.hours+=ev[3];
+  const fx=[ev[1]?(ev[1]>0?'+':'')+vnd(ev[1]):'',ev[2]?(ev[2]>0?'+':'')+ev[2]+' năng lượng':'',ev[3]?'+'+ev[3]+' giờ':''].filter(Boolean).join(', ');
+  addLog('Dọc đường: '+ev[0]+' ('+fx+').',(ev[1]<0||ev[2]<0||ev[3]>0)?'bad':'good');msg+=' Dọc đường: '+ev[0].toLowerCase()+'.'}
+ S.dest=null;S.tab='here';FX={type:'arrive',text:'Đã đến '+b.n+' rồi!'};save();render();toast(msg);
+ if(innerWidth<=860)setTimeout(()=>document.querySelector('.panel').scrollIntoView({behavior:'smooth',block:'start'}),300);
+ clearFX();
+}
+
+// ===== NHÂN VẬT =====
+const SHIRT={phuot:'#C8372D',sinhvien:'#2E6DB4',foodie:'#E08A1E',vanphong:'#1E7A63'};
+function heroSVG(pose=''){
+ const sh=SHIRT[S.arch]||'#C8372D';
+ let prop='';
+ if(pose.includes('photo'))prop=`<rect x="5" y="-37" width="8" height="5.5" rx="1" fill="#2B2B2B"/><circle cx="9" cy="-34.2" r="1.6" fill="#7FB8E0"/><circle class="flash" cx="9" cy="-34" r="7" fill="#FFF8D0"/>`;
+ if(pose.includes('eat'))prop=`<path d="M3 -16 h13 a6.5 5 0 0 1 -13 0 Z" fill="#F4F1E8" stroke="#B5A88A" stroke-width=".6"/><path d="M5 -16.5 q4 -2 9 0" stroke="#D9A441" stroke-width="1.2" fill="none"/><line x1="12" y1="-24" x2="16" y2="-15" stroke="#8A6A3A" stroke-width=".8"/><line x1="14" y1="-24" x2="17" y2="-15" stroke="#8A6A3A" stroke-width=".8"/><path class="steam" d="M7 -19 q-2 -3 0 -6" stroke="#fff" stroke-width="1" fill="none"/><path class="steam" style="animation-delay:.5s" d="M11 -19 q2 -3 0 -6" stroke="#fff" stroke-width="1" fill="none"/>`;
+ if(pose.includes('work'))prop=`<rect x="2" y="-22" width="13" height="10" rx="1" fill="#B9874E" stroke="#7A5530" stroke-width=".7"/><line x1="2" y1="-17" x2="15" y2="-17" stroke="#7A5530" stroke-width=".6"/>`;
+ return `<g class="hero-body ${pose}">
+  <ellipse cx="0" cy="0" rx="9" ry="2.4" fill="rgba(0,0,0,.22)"/>
+  <g class="legs"><rect class="lg l1" x="-4.6" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/><rect class="lg l2" x="0.8" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/></g>
+  <rect x="-9.5" y="-23" width="5.5" height="11" rx="2" fill="#6B4F2E"/>
+  <rect class="arm a1" x="-7.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"/>
+  <rect x="-5.6" y="-23.5" width="11.2" height="13.5" rx="3.6" fill="${sh}"/>
+  <rect x="-5.6" y="-12.5" width="11.2" height="2" fill="rgba(0,0,0,.18)"/>
+  <rect class="arm a2" x="4.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"/>
+  <circle cx="0" cy="-28.5" r="5.6" fill="#F2C9A0"/>
+  <circle cx="2.2" cy="-28.8" r=".85" fill="#2B2B2B"/><path d="M1.2 -26.3 q1.2 .8 2.4 0" stroke="#9A5B3A" stroke-width=".6" fill="none"/>
+  <path d="M-10.5 -30.5 L0 -39.5 L10.5 -30.5 Q0 -28.6 -10.5 -30.5 Z" fill="#EBD9A6" stroke="#A8915A" stroke-width=".7"/>
+  <path d="M-5 -33 L0 -37.5 M5 -33 L0 -37.5" stroke="#CDB57A" stroke-width=".5"/>
+  ${prop}</g>`;
+}
+function mini(x,y){return `<circle cx="${x}" cy="${y}" r="2.6" fill="#F2C9A0"/><path d="M${x-4.2} ${y-1.2} L${x} ${y-5} L${x+4.2} ${y-1.2} Z" fill="#EBD9A6" stroke="#A8915A" stroke-width=".4"/>`}
+function vehicleSVG(k,flip){
+ const f=flip&&k!=='plane'?' transform="scale(-1,1)"':'';
+ if(k==='moto')return `<g class="veh"${f}><g class="bob"><circle cx="-9" cy="-4" r="4.2" fill="#3A3A3A"/><circle cx="-9" cy="-4" r="1.6" fill="#BBB"/><circle cx="10" cy="-4" r="4.2" fill="#3A3A3A"/><circle cx="10" cy="-4" r="1.6" fill="#BBB"/><path d="M-12 -8 Q-4 -13 6 -10 L12 -9 L10 -5 L-9 -5 Z" fill="#2E6DB4"/><line x1="8" y1="-10" x2="11" y2="-16" stroke="#333" stroke-width="1.4"/><g class="riding" transform="translate(-1,-7) scale(.78)">${heroSVG()}</g></g></g>`;
+ if(k==='bus')return `<g class="veh"${f}><g class="bob"><rect x="-19" y="-21" width="38" height="17" rx="3" fill="#E3A21A"/><rect x="-19" y="-10" width="38" height="2.2" fill="#C8372D"/>${[-16,-8,0,8].map(x=>`<rect x="${x}" y="-18.5" width="6" height="5.5" rx="1" fill="#CFEAF5"/>`).join('')}<rect x="15" y="-18.5" width="3" height="8" rx="1" fill="#CFEAF5"/>${mini(11,-14)}<circle cx="-11" cy="-3.5" r="3.4" fill="#333"/><circle cx="11" cy="-3.5" r="3.4" fill="#333"/></g></g>`;
+ if(k==='train')return `<g class="veh"${f}><g class="bob"><rect x="-34" y="-18" width="30" height="14" rx="2" fill="#1E6B58"/><rect x="-2" y="-18" width="26" height="14" rx="2" fill="#1E6B58"/><path d="M24 -18 h4 q6 0 6 8 v6 h-10 Z" fill="#C8372D"/>${[-31,-24,-17,-10,1,8,15].map(x=>`<rect x="${x}" y="-15.5" width="5" height="4.5" rx=".8" fill="#CFEAF5"/>`).join('')}${mini(10.5,-12.5)}<rect x="-34" y="-8" width="68" height="1.6" fill="#E3A21A"/>${[-28,-12,4,20,30].map(x=>`<circle cx="${x}" cy="-3" r="2.4" fill="#333"/>`).join('')}</g></g>`;
+ return `<g class="veh"><ellipse cx="0" cy="0" rx="17" ry="4.2" fill="#FFFFFF" stroke="#6B7680" stroke-width=".8"/><path d="M-2 -1 L-9 -13 L-4 -13 L7 -1 Z" fill="#DDE3E8" stroke="#6B7680" stroke-width=".6"/><path d="M-2 1 L-7 9 L-3 9 L6 1 Z" fill="#C9D1D8" stroke="#6B7680" stroke-width=".6"/><path d="M-17 0 L-20 -8 L-15 -8 L-11 -1 Z" fill="#C8372D"/>${[-6,-2,2,6].map(x=>`<circle cx="${x}" cy="-.6" r=".9" fill="#2E6DB4"/>`).join('')}<path d="M14 -2 q3 2 0 4" fill="#2E6DB4"/></g>`;
+}
+
+// ===== KHUNG CẢNH TẠI ĐIỂM ĐẾN =====
+let FX=null,fxT;
+function clearFX(){clearTimeout(fxT);fxT=setTimeout(()=>{FX=null;if(S&&S.tab==='here')renderScene()},3200)}
+function act(type,text){FX={type,text};clearFX()}
+const R=(x,y,w,h,f,e='')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}" ${e}/>`;
+const P=(d,f,e='')=>`<path d="${d}" fill="${f}" ${e}/>`;
+const O=(x,y,r,f,e='')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${f}" ${e}/>`;
+const hump=(x,w,h,base,f)=>P(`M${x} ${base} C${x+w*.05} ${base-h} ${x+w*.95} ${base-h} ${x+w} ${base} Z`,f);
+const palm=(x,y,s=1)=>`<g transform="translate(${x},${y}) scale(${s})">${P('M0 0 Q4 -30 10 -58 L13 -57 Q8 -30 4 0 Z','#7A5530')}${[[-28,-48],[-22,-66],[0,-74],[26,-66],[34,-50]].map(([a,b])=>P(`M11 -58 Q${(11+a)/2+3} ${b-10} ${11+a} ${b}`,'none','stroke="#2F7D3A" stroke-width="5" stroke-linecap="round"')).join('')}</g>`;
+const pine=(x,y,s=1,f='#22543D')=>`<g transform="translate(${x},${y}) scale(${s})">${R(-2,-6,4,8,'#5A4026')}${P('M-12 -6 L0 -26 L12 -6 Z M-10 -16 L0 -34 L10 -16 Z M-7 -26 L0 -42 L7 -26 Z',f)}</g>`;
+const boat=(x,y,s=1)=>`<g transform="translate(${x},${y}) scale(${s})">${P('M-20 0 Q0 8 22 0 L18 -4 L-17 -4 Z','#6B4A2B')}${R(-6,-10,10,6,'#8A6A40')}</g>`;
+const SCN={
+ hanoi:()=>R(0,118,400,72,'#5FA3A8')+hump(-20,140,40,122,'#3E7D4E')+hump(300,140,46,122,'#3E7D4E')+P('M240 128 Q245 112 265 112 Q285 112 290 128 Z','#4C8A55')+`<g>${R(254,96,22,18,'#B9A27A')}${R(252,92,26,4,'#8C3B2E')}${R(257,84,16,8,'#B9A27A')}${R(255,80,20,4,'#8C3B2E')}${P('M260 80 L265 72 L270 80 Z','#8C3B2E')}</g>`+P('M150 150 Q200 118 250 150','none','stroke="#C8372D" stroke-width="5"')+R(0,160,400,30,'#9BB07E'),
+ halong:()=>R(0,120,400,70,'#3E9DB0')+hump(150,60,90,124,'#5E8C6A')+hump(200,70,110,124,'#4D7A5A')+hump(280,50,70,124,'#6A9876')+hump(330,80,96,124,'#557F60')+hump(240,40,52,124,'#3F6B4C')+`<g transform="translate(300,140)">${P('M-24 0 Q0 9 26 0 L22 -5 L-20 -5 Z','#6B3E22')}${P('M-6 -6 L-6 -34 Q6 -26 10 -6 Z','#D9792F')}${P('M10 -6 L10 -28 Q20 -20 22 -6 Z','#C8562A')}</g>`+R(0,158,400,32,'#8A6A40')+R(0,158,400,3,'#6B4F2E'),
+ ninhbinh:()=>hump(20,90,95,130,'#4E8A57')+hump(110,70,70,130,'#3E7A4A')+hump(230,80,105,130,'#5A9660')+hump(310,90,80,130,'#447F4E')+R(0,126,400,22,'#6FAFB5')+boat(250,140,.8)+R(0,148,400,42,'#9CC46A')+[0,1,2,3,4].map(i=>P(`M${i*90} 160 h70`,'none','stroke="#B7D98A" stroke-width="2"')).join(''),
+ sapa:()=>P('M0 120 L60 60 L120 100 L190 40 L260 95 L330 55 L400 100 L400 190 L0 190 Z','#4C7F5C')+P('M0 140 Q120 92 250 118 T400 110 L400 190 L0 190 Z','#7FB25E')+[0,1,2,3,4,5].map(i=>P(`M0 ${146+i*8} Q120 ${100+i*9} 250 ${124+i*8} T400 ${116+i*8}`,'none','stroke="#A9D17A" stroke-width="2"')).join('')+R(0,170,400,20,'#6E9E4F'),
+ hagiang:()=>P('M0 125 L50 70 L95 105 L150 45 L205 98 L260 30 L320 92 L370 58 L400 85 L400 190 L0 190 Z','#7E8C96')+P('M0 150 L70 110 L140 140 L220 100 L300 138 L400 108 L400 190 L0 190 Z','#9AA48E')+R(259,8,2,24,'#555')+R(261,8,22,15,'#DA251D')+P('M272 11.5 l1.4 3.6 3.8.1 -3 2.3 1.1 3.7 -3.3-2.2 -3.3 2.2 1.1-3.7 -3-2.3 3.8-.1 Z','#FFDD00')+R(0,165,400,25,'#B7A57E'),
+ phongnha:()=>R(0,0,400,190,'#2B2421')+P('M60 190 L60 110 Q200 10 340 110 L340 190 Z','#6FA7A0')+P('M60 190 L60 110 Q200 10 340 110 L340 190 L320 190 L320 118 Q200 40 80 118 L80 190 Z','#3A302B')+[90,130,170,215,260,300].map((x,i)=>P(`M${x} ${60-(i%2)*10} l6 ${18+i%3*8} l6 ${-18-i%3*8} Z`,'#4B3F38')).join('')+R(0,140,400,24,'#2F6E73')+boat(220,152,.9)+R(0,164,400,26,'#4B3F38'),
+ hue:()=>R(80,96,240,44,'#9C4B33')+R(170,108,60,32,'#6B2E20')+R(150,80,100,16,'#C99A2E')+P('M140 80 L200 62 L260 80 Z','#B8402E')+R(170,52,60,10,'#C99A2E')+P('M162 52 L200 38 L238 52 Z','#B8402E')+R(0,140,400,50,'#BFAE8E')+[0,1,2,3,4,5,6,7].map(i=>R(i*50,140,1,50,'#A8977A')).join(''),
+ danang:()=>P('M0 110 L80 70 L150 100 L230 60 L320 95 L400 75 L400 130 L0 130 Z','#6C8C8A')+R(0,124,400,30,'#3E8FA6')+P('M10 128 Q50 96 90 120 T170 118 T250 116 T330 114 T390 106','none','stroke="#E3B91A" stroke-width="6" stroke-linecap="round"')+P('M384 108 l12 -10 l-2 12 Z','#E3B91A')+[40,120,200,280,360].map(x=>R(x,118,3,14,'#9E8C6A')).join('')+R(0,154,400,36,'#C9B48A'),
+ hoian:()=>[0,80,160,240,320].map((x,i)=>R(x+4,70+i%2*8,72,70-i%2*8,'#E9C063')+P(`M${x} ${70+i%2*8} L${x+40} ${52+i%2*8} L${x+80} ${70+i%2*8} Z`,'#8E4A2A')+R(x+30,104,16,36,'#6B3E22')).join('')+P('M0 92 Q100 106 200 92 T400 92','none','stroke="#5A3A22" stroke-width="1"')+[30,70,110,150,190,230,270,310,350].map((x,i)=>O(x,100+Math.sin(i)*3,6,i%3?'#D9452B':'#F0A23A')).join('')+R(0,140,400,22,'#3E7F86')+R(0,162,400,28,'#9E8665'),
+ quynhon:()=>R(0,108,400,52,'#3B93B8')+hump(250,140,40,112,'#6A8F6A')+O(330,140,14,'#7E7468')+O(350,146,10,'#8E8478')+R(0,150,400,40,'#EDD9A3')+palm(40,165,.9),
+ nhatrang:()=>R(0,110,400,50,'#2F8FB5')+hump(220,180,60,120,'#6E8F5A')+[[260,58],[292,46],[318,52]].map(([x,h])=>R(x,110-h,22,h,'#A04A30')+P(`M${x} ${110-h} L${x+11} ${92-h} L${x+22} ${110-h} Z`,'#8A3B25')+R(x+8,100,6,10,'#5A2416')).join('')+R(0,150,400,40,'#EAD7A6')+palm(370,168,.75),
+ dalat:()=>P('M0 110 Q100 70 200 100 T400 90 L400 190 L0 190 Z','#7BA592')+R(0,128,400,20,'#8CB8C4')+pine(30,130,1.1)+pine(70,128,.8,'#2F6B4F')+pine(330,130,1.2)+pine(370,128,.9,'#2F6B4F')+R(0,148,400,42,'#86B46A')+[20,48,160,190,220,250,300].map((x,i)=>O(x,166+i%2*8,3,['#E8578B','#F2C230','#B05CC9'][i%3])).join(''),
+ muine:()=>R(0,104,400,24,'#3C99B4')+P('M0 140 Q100 96 210 124 T400 112 L400 190 L0 190 Z','#E9B567')+P('M0 168 Q140 128 260 156 T400 150 L400 190 L0 190 Z','#F2CB84')+[60,90,118].map(x=>`<g>${O(x,120,8,'#7A5A36')}${O(x,118,5,'#5E4428')}</g>`).join(''),
+ hcm:()=>[[10,60],[46,82],[86,50],[120,100],[176,70],[214,120],[250,64],[290,88],[330,56],[364,76]].map(([x,h])=>R(x,140-h,32,h,'#6C7F94')+Array.from({length:Math.floor(h/14)},(_,j)=>R(x+6,146-h+j*14,20,4,'#A9C1D6')).join('')).join('')+P('M226 20 L238 20 L240 140 L220 140 Z','#4E6178')+R(214,64,36,4,'#4E6178')+R(0,140,400,50,'#8A8F96')+R(0,162,400,3,'#E3E3E3','stroke-dasharray="14 10"'),
+ cantho:()=>R(0,110,400,60,'#8A9A6A')+R(0,116,400,54,'#7C8F68')+palm(20,124,.7)+palm(360,124,.8)+[[230,138],[320,150]].map(([x,y])=>`<g transform="translate(${x},${y})">${P('M-30 0 Q0 10 32 0 L28 -6 L-26 -6 Z','#3A6B5A')}${R(-4,-40,2,34,'#7A5530')}${O(-3,-42,4,'#E8A317')}${O(-3,-34,3.5,'#5FA83E')}${O(-10,-12,5,'#E0832A')}${O(2,-12,5,'#B6CE3A')}${O(12,-12,5,'#E0832A')}</g>`).join('')+R(0,166,400,24,'#7A6A4E'),
+ phuquoc:()=>R(0,112,400,48,'#2BB3C0')+hump(280,140,36,116,'#4E8A57')+P('M0 40 L400 10','none','stroke="#555" stroke-width="1"')+`<g transform="translate(260,22)">${R(-1,0,2,6,'#555')}${R(-9,6,18,12,'#C8372D','rx="2"')}${R(-6,9,12,5,'#CFEAF5')}</g>`+R(0,150,400,40,'#F6E7BE')+palm(352,168,.9),
+};
+function sky(night,dusk,gid='sk'){
+ const [a,b]=night?['#0F1C36','#2C3D66']:dusk?['#E7845A','#F8D39A']:['#79C4EA','#DDF2FA'];
+ return `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>${R(0,0,400,190,`url(#${gid})`)}`+
+  (night?[[30,20],[80,40],[140,14],[210,30],[280,18],[350,36],[380,12]].map(([x,y])=>O(x,y,1.2,'#FFF')).join('')+O(350,30,10,'#F3EBC8')+O(355,26,9,'#1D2B4C')
+   :O(dusk?60:340,dusk?70:34,dusk?18:14,dusk?'#FCE3A6':'#FFE680')+P('M40 40 q10 -10 22 0 q12 -6 20 4 h-42 Z','#FFFFFF','opacity=".85"')+P('M220 26 q8 -8 18 0 q10 -5 16 3 h-34 Z','#FFFFFF','opacity=".8"'));
+}
+function bubble(text){
+ const t=text.length>34?text.slice(0,33)+'…':text,w=Math.min(250,t.length*6.6+22),x=Math.min(132,388-w);
+ return `<g class="pop"><rect x="${x}" y="28" width="${w}" height="28" rx="14" fill="#FFFFFF" stroke="#1B2622" stroke-width="1.2"/><path d="M${x+14} 55 L${x+4} 70 L${x+26} 55 Z" fill="#FFFFFF" stroke="#1B2622" stroke-width="1.2"/><rect x="${x+12}" y="53" width="16" height="3" fill="#FFFFFF"/><text x="${x+w/2}" y="46.5" text-anchor="middle" font-size="12.5" font-weight="600" fill="#1B2622" font-family="Be Vietnam Pro, system-ui, sans-serif">${esc(t)}</text></g>`;
+}
+function renderScene(){
+ const el=document.getElementById('scene');if(!el)return;
+ const c=BY[S.city],hr=S.hours%24,sleep=FX&&FX.type==='sleep';
+ const night=sleep||hr>=19.5||hr<5,dusk=!night&&(hr>=17||hr<6);
+ const pose={arrive:'wave',photo:'photo raise',eat:'eat',work:'work walk',quizok:'wave',quizbad:''}[FX&&FX.type]||'';
+ const hero=sleep
+  ?`<g transform="translate(110,176)">${P('M-40 0 L0 -50 L40 0 Z','#2E6DB4')}${P('M-12 0 L0 -30 L12 0 Z','#1B3E6B')}${['Z','z','Z'].map((z,i)=>`<text class="zzz" style="animation-delay:${i*.45}s" x="${30+i*10}" y="${-50-i*12}" font-size="${16-i*3}" font-weight="700" fill="#FFFFFF">${z}</text>`).join('')}</g>`
+  :`<g transform="translate(110,178) scale(2.7)"><g class="breathe">${heroSVG(pose)}</g></g>`;
+ el.innerHTML=`<svg viewBox="0 0 400 190" role="img" aria-label="Nhân vật tại ${esc(c.n)}">${sky(night,dusk)}${(SCN[c.id]||SCN.hanoi)()}${night?R(0,0,400,190,'#0A1430','opacity=".35"'):''}${hero}${FX&&FX.text?bubble(FX.text):''}</svg>
+  <div class="scene-cap"><span>${esc(S.name)} đang ở ${esc(c.n)}</span><span class="num">Ngày ${dayOf(S.hours)} · ${clock(S.hours)}</span></div>`;
+}
+
+// ===== HÀNH ĐỘNG TẠI ĐIỂM =====
+function checkin(i){
+ const c=BY[S.city],l=c.L[i],k=c.id+':L'+i;if(S.done[k])return;
+ if(S.money<l[1])return toast('Không đủ tiền mua vé.');
+ if(l[2]>0&&S.energy<l[2])return toast('Bạn quá mệt để tham quan. Nghỉ ngơi đã.');
+ S.money-=l[1];S.energy=Math.min(S.maxE,S.energy-l[2]);S.hours+=l[3];S.done[k]=dayOf(S.hours);
+ addLog('Check-in '+l[0]+' ('+c.n+').','good');act('photo','Check-in '+l[0]+'!');save();render();
+ postcard(k);
+}
+function eat(i){
+ const c=BY[S.city],f=c.F[i],k=c.id+':F'+i;
+ if(S.money<f[1])return toast('Không đủ tiền ăn món này.');
+ const gain=S.arch==='foodie'?25:15;
+ S.money-=f[1];S.energy=Math.min(S.maxE,S.energy+gain);S.hours+=1;
+ let msg='Thưởng thức '+f[0]+'. +'+gain+' năng lượng.';
+ if(S.arch==='foodie'&&!S.done[k]){S.money+=60000;msg+=' Bài review được trả 60.000đ.'}
+ if(!S.done[k]){S.done[k]=dayOf(S.hours);addLog('Ăn '+f[0]+' tại '+c.n+'.','good')}
+act('eat','Ngon quá! '+f[0]);
+ save();render();toast(msg);
+ postcard(k);
+}
+function work(){
+ const c=BY[S.city],key=c.id+':'+dayOf(S.hours),n=S.work[key]||0;
+ if(n>=2)return toast('Hôm nay bạn đã làm đủ 2 ca ở đây.');
+ if(S.energy<25)return toast('Cần ít nhất 25 năng lượng để đi làm.');
+ const pay=Math.round(c.job[1]*(S.arch==='sinhvien'?1.4:1)/1000)*1000;
+ S.energy-=25;S.hours+=4;S.money+=pay;S.work[key]=n+1;
+ addLog(c.job[0]+' tại '+c.n+', nhận '+vnd(pay)+'.','good');act('work','Xong ca! +'+vnd(pay));save();render();toast('Làm xong ca, nhận '+vnd(pay)+'.');
+}
+function answer(txt){
+ const c=BY[S.city];if(S.quiz[c.id]!==undefined)return;
+ const ok=txt===c.q[1][c.q[2]],rw=S.arch==='sinhvien'?200000:100000;
+ S.quiz[c.id]=ok;if(ok)S.money+=rw;
+ addLog('Đố vui '+c.n+': '+(ok?'trả lời đúng, thưởng '+vnd(rw):'trả lời sai')+'.',ok?'good':'bad');
+ act(ok?'quizok':'quizbad',ok?'Đúng rồi! +'+vnd(rw):'Ôi, sai mất rồi…');
+ save();render();toast(ok?'Chính xác! +'+vnd(rw):'Sai rồi. Đáp án: '+c.q[1][c.q[2]]);
+}
+function rest(kind){
+ const c=BY[S.city];
+ if(kind==='inn'){
+  if(S.money<c.stay)return toast('Không đủ tiền thuê phòng. Thử ngủ nhờ homestay.');
+  S.money-=c.stay;S.energy=S.maxE;let t=Math.floor(S.hours/24)*24+31;if(t-S.hours>16)t-=24;if(t<=S.hours)t+=24;S.hours=t;
+  addLog('Ngủ nhà nghỉ ở '+c.n+' ('+vnd(c.stay)+'). Năng lượng đầy.');act('sleep','');
+ }else{
+  S.energy=Math.min(S.maxE,S.energy+40);S.hours+=8;
+  addLog('Ngủ nhờ homestay, phụ việc nhà đổi chỗ ngủ ở '+c.n+'.');act('sleep','');
+ }
+ save();render();stayScene(kind);
+}
+
+// ===== BẢN ĐỒ =====
+const px=(lon,lat)=>[+((lon-101.5)*40).toFixed(1),+((23.8-lat)*40).toFixed(1)];
+const OUT=[[105.32,23.36],[106.2,22.95],[106.7,22.85],[107.35,22.25],[107.97,21.53],[107.4,21.25],[107.1,20.95],[106.8,20.7],[106.6,20.3],[106.1,19.9],[105.9,19.55],[105.75,18.95],[105.95,18.4],[106.45,17.9],[106.7,17.35],[107.15,16.85],[107.6,16.5],[108.25,16.1],[108.7,15.5],[108.9,15.15],[109.1,14.4],[109.27,13.8],[109.35,13.1],[109.22,12.3],[109.25,11.9],[109.0,11.5],[108.7,11.1],[108.35,10.9],[108.1,10.9],[107.6,10.6],[107.1,10.35],[106.75,10.3],[106.65,9.95],[106.45,9.6],[106.2,9.35],[105.7,9.15],[105.15,8.75],[104.75,8.6],[104.8,9.05],[104.9,9.6],[105.05,10.0],[104.75,10.2],[104.45,10.42],[105.05,10.9],[105.45,10.95],[106.0,11.05],[105.9,11.6],[106.4,11.75],[106.75,12.05],[107.4,12.3],[107.55,12.8],[107.5,13.5],[107.45,14.2],[107.55,14.7],[107.3,15.3],[107.6,15.55],[107.25,16.0],[107.0,16.3],[106.65,16.55],[106.3,16.95],[105.9,17.4],[105.4,18.15],[104.9,18.6],[104.4,18.85],[103.95,19.25],[104.5,19.6],[104.6,20.05],[104.4,20.45],[103.9,20.75],[103.5,20.85],[103.0,21.25],[102.75,21.7],[102.15,22.4],[102.6,22.7],[103.1,22.55],[103.55,22.6],[104.0,22.5],[104.4,22.75],[104.75,22.85],[105.0,23.2]];
+const PQ=[[103.9,10.45],[104.08,10.38],[104.06,10.05],[103.98,9.98],[103.84,10.2]];
+const poly=pts=>'M'+pts.map(p=>px(p[0],p[1]).join(',')).join('L')+'Z';
+const LAND=poly(OUT)+poly(PQ);
+
+function renderMap(){
+ const route=S.route.map(id=>px(BY[id].lon,BY[id].lat).join(',')).join(' ');
+ const cities=C.map(c=>{const[x,y]=px(c.lon,c.lat),here=c.id===S.city;
+  return `<g class="city${S.visited[c.id]?' v':''}${S.dest===c.id?' dest':''}" data-a="pick" data-id="${c.id}" tabindex="0" role="button" aria-label="${esc(c.n)}">
+   ${here?`<circle class="pulse" cx="${x}" cy="${y}" r="9"/><circle class="here-ring" cx="${x}" cy="${y}" r="10"/>`:''}
+   <circle cx="${x}" cy="${y}" r="14" fill="transparent"/>
+   <circle class="dot" cx="${x}" cy="${y}" r="5.5"/>
+   <text x="${x+c.lb[0]}" y="${y+c.lb[1]}" text-anchor="${c.lb[2]}">${esc(c.n)}</text></g>`}).join('');
+ const [hx,hy]=px(BY[S.city].lon,BY[S.city].lat);
+ const heroG=`<g id="hero" class="hero-g" transform="translate(${hx},${hy})"><g transform="scale(1.1)"><g class="breathe">${heroSVG()}</g></g></g>`;
+ const hint=document.getElementById('maphint');if(hint)hint.textContent='Chạm vào một điểm để chọn nơi đến';
+ const isl=(lon,lat,t,dx)=>{const[x,y]=px(lon,lat);return `<g class="isl">${[[0,0],[7,4],[-5,6],[3,-6]].map(d=>`<circle cx="${x+d[0]}" cy="${y+d[1]}" r="1.8"/>`).join('')}<text x="${x+dx}" y="${y+20}" text-anchor="middle">${t}</text></g>`};
+ document.getElementById('map').innerHTML=`<svg viewBox="40 0 520 640" role="img" aria-label="Bản đồ hành trình">
+  <rect x="40" y="0" width="520" height="640" fill="transparent"/>
+  <path class="land" d="${LAND}"/>
+  ${S.route.length>1?`<polyline class="route" points="${route}"/>`:''}
+  ${isl(112,16.5,'Q.Đ. Hoàng Sa',0)}${isl(114,10,'Q.Đ. Trường Sa',-6)}
+  <text class="compass" x="520" y="40" text-anchor="middle">B</text>
+  <path d="M520 46 L515 62 L520 58 L525 62 Z" fill="var(--muted)"/>
+  ${cities}${heroG}</svg>`;
+}
+
+// ===== HUD & PANEL =====
+function renderHUD(){
+ const A=ARCH[S.arch],pct=Math.round(doneCount()/total()*100);
+ document.getElementById('hud').innerHTML=`
+  <div class="brand">Xuyên Việt Ký<small>Nhập vai du lịch</small></div>
+  <div class="who"><div class="avatar" aria-hidden="true">${esc(S.name.trim()[0]||'L').toUpperCase()}</div><div><b>${esc(S.name)}</b><span>${A.n} · đang ở ${BY[S.city].n}</span></div></div>
+  <div class="stats">
+   <div class="stat"><label>Ví tiền</label><span class="v">${vnd(S.money)}</span></div>
+   <div class="stat"><label>Năng lượng ${S.energy}/${S.maxE}</label><div class="bar e"><i style="width:${S.energy/S.maxE*100}%"></i></div></div>
+   <div class="stat"><label>Thời gian</label><span class="v">Ngày ${dayOf(S.hours)} · ${clock(S.hours)}</span></div>
+   <div class="stat"><label>Hành trình ${pct}%</label><div class="bar"><i style="width:${pct}%"></i></div></div>
+   <button class="ghost" data-a="reset">Chơi lại</button>
+  </div>`;
+}
+const TABS=[['here','Tại đây'],['go','Di chuyển'],['pass','Hộ chiếu'],['log','Nhật ký']];
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(t=>`<button role="tab" aria-selected="${S.tab===t[0]}" data-a="tab" data-id="${t[0]}">${t[1]}</button>`).join('')}
+
+function shuffleOpts(c){const o=[...c.q[1]];let seed=c.id.length*7+dayOf(1);for(let i=o.length-1;i>0;i--){seed=(seed*9301+49297)%233280;const j=Math.floor(seed/233280*(i+1));[o[i],o[j]]=[o[j],o[i]]}return o}
+function hereView(){
+ const c=BY[S.city],day=dayOf(S.hours),wn=S.work[c.id+':'+day]||0;
+ const pay=Math.round(c.job[1]*(S.arch==='sinhvien'?1.4:1)/1000)*1000;
+ const L=c.L.map((l,i)=>{const d=S.done[c.id+':L'+i];
+  const meta=[l[1]?vnd(l[1]):'Miễn phí',l[3]+' giờ',l[2]<0?'+'+(-l[2])+' năng lượng':'-'+l[2]+' năng lượng'].join(' · ');
+  return `<div class="row"><div class="t"><b>${esc(l[0])}</b><span>${meta}</span></div>${d?`<span class="chip">Đã check-in</span>`:`<button class="btn" data-a="checkin" data-id="${i}">Check-in</button>`}</div>`}).join('');
+ const F=c.F.map((f,i)=>{const d=S.done[c.id+':F'+i];
+  return `<div class="row"><div class="t"><b>${esc(f[0])}</b><span>${vnd(f[1])} · 1 giờ · +${S.arch==='foodie'?25:15} năng lượng</span></div><button class="btn ${d?'out':'sun'}" data-a="eat" data-id="${i}">${d?'Ăn lại':'Thưởng thức'}</button></div>`}).join('');
+ const qs=S.quiz[c.id];
+ const quiz=qs===undefined?`<div class="quiz"><b>Đố vui địa phương: ${esc(c.q[0])}</b><div class="qopts">${shuffleOpts(c).map(o=>`<button data-a="ans" data-id="${esc(o)}">${esc(o)}</button>`).join('')}</div><div class="note" style="margin-top:8px">Trả lời đúng nhận ${vnd(S.arch==='sinhvien'?200000:100000)}. Chỉ được trả lời một lần.</div></div>`
+  :`<div class="row" style="border:1px solid var(--line);border-radius:10px"><div class="t"><b>Đố vui: ${esc(c.q[1][c.q[2]])}</b><span>${esc(c.q[0])}</span></div><span class="chip ${qs?'':'red'}">${qs?'Đúng':'Sai'}</span></div>`;
+ const pct=Math.round(doneCount()/total()*100);
+ return `${pct===100?`<div class="win"><b>Hoàn thành hành trình xuyên Việt!</b>Bạn đã đi hết ${C.length} điểm đến trong ${day} ngày. Hãy khoe hộ chiếu với bạn bè.</div>`:''}
+ <div><div class="scene" id="scene"></div></div>
+ <div class="cityhead"><h2>${esc(c.n)}</h2><div class="prov">${esc(c.p)}</div><p>${esc(c.intro)}</p></div>
+ <div class="sec"><h3>Điểm check-in</h3><div class="rows">${L}</div></div>
+ <div class="sec"><h3>Đặc sản nên thử</h3><div class="rows">${F}</div></div>
+ <div class="sec"><h3>Kiếm tiền đi tiếp</h3><div class="rows" style="margin-bottom:10px"><div class="row"><div class="t"><b>${esc(c.job[0])}</b><span>+${vnd(pay)} · 4 giờ · -25 năng lượng · còn ${2-wn}/2 ca hôm nay</span></div><button class="btn" data-a="work" ${wn>=2?'disabled':''}>Làm ca</button></div></div>${quiz}</div>
+ <div class="sec"><h3>Nghỉ ngơi</h3><div class="rest">
+  <button data-a="rest" data-id="inn"><b>Nhà nghỉ</b><span>${vnd(c.stay)} · ngủ đến 7:00 · đầy năng lượng</span></button>
+  <button data-a="rest" data-id="camp"><b>Ngủ nhờ homestay</b><span>Miễn phí · 8 giờ · +40 năng lượng</span></button></div></div>`;
+}
+function goView(){
+ const a=BY[S.city];
+ const list=C.filter(c=>c.id!==S.city).map(c=>({c,km:roadKm(a,c)})).sort((x,y)=>x.km-y.km);
+ let detail='';
+ if(S.dest){const b=BY[S.dest],M=modes(a,b);
+  detail=`<div class="sec"><h3>${esc(a.n)} → ${esc(b.n)} · khoảng ${M.km.toLocaleString('vi-VN')} km đường bộ</h3><div class="modes">${M.list.map(m=>{
+   const why=S.money<m.c?'Thiếu '+vnd(m.c-S.money):S.energy<m.e?'Thiếu '+(m.e-S.energy)+' năng lượng':'';
+   return `<div class="mode"><b>${m.n} <span class="note">· ${m.sub}</span></b><div class="meta"><span class="num">${vnd(m.c)}</span><span>${m.h} giờ</span><span>-${m.e} năng lượng</span></div><button class="btn" data-a="go" data-id="${m.k}" ${why?'disabled':''}>Đi</button>${why?`<div class="why">${why}</div>`:''}</div>`}).join('')}</div></div>`}
+ return `${detail||`<p class="note" style="margin:0">Chọn điểm đến trên bản đồ hoặc trong danh sách bên dưới. Danh sách xếp theo khoảng cách từ ${esc(a.n)}.</p>`}
+ <div class="sec"><h3>Điểm đến</h3><div class="dlist">${list.map(({c,km})=>`<button class="dest${S.dest===c.id?' sel':''}" data-a="pick" data-id="${c.id}"><span class="vtag${S.visited[c.id]?' on':''}"></span><b>${esc(c.n)}</b><span class="km num">${km.toLocaleString('vi-VN')} km</span></button>`).join('')}</div></div>`;
+}
+function passView(){
+ const lm=C.reduce((s,c)=>s+c.L.length,0),fd=C.reduce((s,c)=>s+c.F.length,0);
+ const lmD=Object.keys(S.done).filter(k=>k.includes(':L')).length,fdD=Object.keys(S.done).filter(k=>k.includes(':F')).length;
+ return `<div class="summary"><div><b>${Object.keys(S.visited).length}/${C.length}</b><span>Điểm đến</span></div><div><b>${lmD}/${lm}</b><span>Check-in</span></div><div><b>${fdD}/${fd}</b><span>Đặc sản</span></div></div>
+ <div class="stamps">${C.map(c=>{const v=S.visited[c.id],n=c.L.filter((_,i)=>S.done[c.id+':L'+i]).length+c.F.filter((_,i)=>S.done[c.id+':F'+i]).length,t=c.L.length+c.F.length;
+  return `<div class="stamp${v?' on':''}"><div class="sn">${esc(c.n)}</div><div class="sd">${v?'Ngày '+v:'Chưa đến'}</div><div class="sp">${n}/${t} trải nghiệm</div></div>`}).join('')}</div>
+ ${albumView()}
+ <p class="note" style="margin:0">Giá vé, giá món ăn trong game là giá tham khảo, có thể khác thực tế. Tên tỉnh theo địa giới sau sáp nhập 2025.</p>`;
+}
+function logView(){return `<div class="log">${S.log.map(l=>`<div class="${l.c}"><time>${l.d}</time>${esc(l.t)}</div>`).join('')}</div>`}
+
+function render(){
+ if(!S)return;
+ renderHUD();renderTabs();renderMap();
+ document.getElementById('pbody').innerHTML=S.tab==='go'?goView():S.tab==='pass'?passView():S.tab==='log'?logView():hereView();
+ if(S.tab==='here')renderScene();
+ if(S.tab==='pass')document.querySelectorAll('.album .th[data-k]').forEach(el=>loadInto(el,el.dataset.k));
+}
+
+// ===== ẢNH THẬT =====
+// Ảnh lấy theo thứ tự: ảnh bạn tải lên → ảnh bài Wikipedia (khi tự host game) → ảnh minh họa
+const WK={
+ hanoi:{L:[['en:Hoàn Kiếm Lake','vi:Hồ Hoàn Kiếm'],['en:Temple of Literature, Hanoi','vi:Văn Miếu – Quốc Tử Giám'],['en:Egg coffee','en:Old Quarter (Hanoi)']],F:[['en:Phở'],['en:Bún chả']]},
+ halong:{L:[['en:Hạ Long Bay'],['vi:Hang Luồn','en:Hạ Long Bay'],['vi:Đảo Ti Tốp','en:Ti Top Island']],F:[['vi:Chả mực Hạ Long','vi:Chả mực'],['en:Bánh cuốn']]},
+ sapa:{L:[['en:Fansipan'],['vi:Bản Cát Cát','en:Sa Pa'],['vi:Thung lũng Mường Hoa','en:Sa Pa']],F:[['en:Hot pot'],['vi:Lợn cắp nách']]},
+ hagiang:{L:[['vi:Cột cờ Lũng Cú','en:Lũng Cú flag tower'],['vi:Đèo Mã Pí Lèng','en:Mã Pí Lèng Pass'],['vi:Dinh thự họ Vương']],F:[['vi:Cháo ấu tẩu'],['en:Bánh cuốn']]},
+ ninhbinh:{L:[['en:Tràng An'],['en:Bái Đính Temple','vi:Chùa Bái Đính'],['vi:Hang Múa','en:Tam Cốc-Bích Động']],F:[['vi:Cơm cháy','en:Scorched rice'],['en:Goat meat']]},
+ phongnha:{L:[['en:Phong Nha Cave','en:Phong Nha-Kẻ Bàng National Park'],['en:Paradise Cave','vi:Động Thiên Đường'],['vi:Suối Nước Moọc','en:Phong Nha-Kẻ Bàng National Park']],F:[['vi:Cháo canh','en:Bánh canh'],['en:Bánh bột lọc']]},
+ hue:{L:[['en:Imperial City of Huế','vi:Hoàng thành Huế'],['en:Tomb of Khải Định','vi:Lăng Khải Định'],['en:Thiên Mụ Pagoda']],F:[['en:Bún bò Huế'],['vi:Cơm hến']]},
+ danang:{L:[['en:Dragon Bridge (Da Nang)','vi:Cầu Rồng'],['en:Marble Mountains (Vietnam)','vi:Ngũ Hành Sơn'],['en:Golden Bridge (Vietnam)','en:Bà Nà Hills']],F:[['en:Mì Quảng'],['en:Bánh tráng']]},
+ hoian:{L:[['en:Japanese Covered Bridge','vi:Chùa Cầu'],['en:Hội An'],['en:Basket boat','vi:Rừng dừa Bảy Mẫu']],F:[['en:Cao lầu'],['en:Bánh mì']]},
+ quynhon:{L:[['vi:Eo Gió','en:Quy Nhơn'],['vi:Kỳ Co','en:Quy Nhơn'],['en:Twin Towers (Quy Nhơn)','vi:Tháp Đôi']],F:[['en:Bánh xèo'],['vi:Bún chả cá','en:Fish cake']]},
+ nhatrang:{L:[['en:Po Nagar'],['en:Nha Trang'],['en:Mud bath']],F:[['en:Bánh căn','vi:Bánh căn'],['vi:Nem nướng','en:Nem nướng']]},
+ dalat:{L:[['en:Xuân Hương Lake','vi:Hồ Xuân Hương'],['en:Trúc Lâm Temple','vi:Thiền viện Trúc Lâm'],['en:Datanla Falls','vi:Thác Datanla']],F:[['vi:Bánh tráng nướng','en:Bánh tráng'],['en:Hot pot']]},
+ muine:{L:[['en:Mũi Né'],['vi:Suối Tiên (Mũi Né)','en:Mũi Né'],['en:Mũi Né']],F:[['vi:Lẩu thả'],['vi:Dông','en:Leiolepis']]},
+ hcm:{L:[['en:Independence Palace'],['en:Bến Thành Market'],['en:Củ Chi tunnels']],F:[['en:Cơm tấm'],['en:Hủ tiếu'],['en:Bánh mì']]},
+ cantho:{L:[['en:Cái Răng Floating Market','vi:Chợ nổi Cái Răng'],['vi:Nhà cổ Bình Thủy'],['vi:Bến Ninh Kiều']],F:[['en:Lẩu mắm','vi:Lẩu mắm'],['en:Bánh tét']]},
+ phuquoc:{L:[['en:Hòn Thơm Cable Car','vi:Cáp treo Hòn Thơm'],['en:Phú Quốc'],['en:Phú Quốc']],F:[['vi:Gỏi cá trích'],['vi:Bún quậy']]},
+};
+let PHOTOS={},CAN_UP=false,ASSETS=null,DB=null;
+const wikiCache={};
+try{Object.assign(wikiCache,JSON.parse(localStorage.getItem('xvk.wiki')||'{}'))}catch(e){}
+function candidates(key){const [id,t]=key.split(':'),w=WK[id];if(!w||!t)return[];const i=+t.slice(1);return t[0]==='L'?(w.L[i]||[]):t[0]==='F'?(w.F[i]||[]):[]}
+async function wiki(cand){
+ if(cand in wikiCache)return wikiCache[cand];
+ const i=cand.indexOf(':'),lang=cand.slice(0,i),title=cand.slice(i+1);
+ try{
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),6000);
+  const r=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g,'_'))}`,{signal:ctl.signal});
+  clearTimeout(tm);
+  if(!r.ok){wikiCache[cand]=null;return null}
+  const d=await r.json(),src=d.thumbnail&&d.thumbnail.source;
+  const v=src?{src:src.replace(/\/\d+px-/,'/500px-'),fallback:src,credit:'Wikipedia · '+d.title,href:d.content_urls&&d.content_urls.desktop&&d.content_urls.desktop.page}:null;
+  wikiCache[cand]=v;try{localStorage.setItem('xvk.wiki',JSON.stringify(wikiCache))}catch(e){}
+  return v;
+ }catch(e){return undefined} // bị chặn mạng: không lưu cache, dùng ảnh minh họa
+}
+const BUILTIN={"hanoi:F0": {"u": "/_blob/29efcfaa4e57aa53bad2932a308d8856", "c": "SerraKnightz · CC BY 4.0", "h": "https://commons.wikimedia.org/wiki/File:Bowl_of_Meatball_pho.jpg"}, "hagiang:L1": {"u": "/_blob/df10ca19e7b3a9b48ca5090998de6496", "c": "Khánh Hmoong · CC BY 2.0", "h": "https://commons.wikimedia.org/wiki/File:Ma_Pi_Leng_Pass_winding_road_Ha_Giang_Vietnam.jpg"}, "hagiang:F1": {"u": "/_blob/8d6df6226e948f9e1413e451f9cea9f1", "c": "Casablanca1911 at vi.wikipedia · Public domain", "h": "https://commons.wikimedia.org/wiki/File:B%C3%A1nh_cu%E1%BB%91n_Thanh_Tr%C3%AC.jpg"}, "ninhbinh:L2": {"u": "/_blob/bb6b5d73020e1f7c3964312f900c9e66", "c": "Kien1980v (thảo luận) · Public domain", "h": "https://commons.wikimedia.org/wiki/File:Muaxuantamcoc.jpg"}, "ninhbinh:L1": {"u": "/_blob/289f30fcfa803fa69a5c3ffc25e296c6", "c": "VŨ HÙNG · CC BY-SA 3.0", "h": "https://commons.wikimedia.org/wiki/File:M%E1%BB%98T_G%C3%93C_CH%C3%99A_B%C3%81I_%C4%90%C3%8DNH_-_panoramio.jpg"}};
+async function getPhoto(key){
+ if(PHOTOS[key])return {src:'/_blob/'+PHOTOS[key],credit:'Ảnh do bạn tải lên'};
+ const bi=window.claude&&window.claude.use&&BUILTIN[key];if(bi)return {src:bi.u,credit:bi.c+' · Wikimedia Commons',href:bi.h};
+ for(const c of candidates(key)){const v=await wiki(c);if(v)return v;if(v===undefined)return null}
+ return null;
+}
+function loadInto(el,key){
+ getPhoto(key).then(p=>{
+  if(!p||!el.isConnected)return;
+  const img=el.querySelector('img');if(!img)return;
+  img.onload=()=>{img.classList.add('ok');const s=el.querySelector('.psrc');if(s)s.textContent='Ảnh thật';
+   const cr=el.id==='pframe'&&document.getElementById('pcredit');
+   if(cr)cr.innerHTML=p.href?`Nguồn ảnh: <a href="${esc(p.href)}" target="_blank" rel="noopener">${esc(p.credit)}</a>`:esc(p.credit)};
+  img.onerror=()=>{if(p.fallback&&img.src!==p.fallback)img.src=p.fallback};
+  img.src=p.src;
+ });
+}
+(async()=>{try{
+ const cl=window.claude;if(!cl||!cl.use)return;
+ const [db,assets,user]=await Promise.all([cl.use('db'),cl.use('assets'),cl.use('user')]);
+ DB=db;ASSETS=assets;
+ if(db)db.collection('photos').onSnapshot(snap=>{PHOTOS={};snap.docs.forEach(d=>{const v=d.data();if(v&&v.key&&v.id)PHOTOS[v.key]=v.id});if(S&&S.tab==='pass')render()},()=>{});
+ CAN_UP=!!(assets&&db&&user&&await user.canEdit());
+}catch(e){}})();
+function doUpload(key){
+ const inp=document.getElementById('upfile');if(!inp||!ASSETS||!DB)return;
+ inp.onchange=async()=>{
+  const f=inp.files[0];if(!f)return;
+  if(!f.type.startsWith('image/'))return toast('Chỉ nhận file ảnh (JPG, PNG, WebP).');
+  try{
+   toast('Đang tải ảnh lên…');
+   const r=await ASSETS.upload(f);
+   await DB.collection('photos').doc(key.replace(/:/g,'-')).set({key,id:r.id});
+   PHOTOS[key]=r.id;
+   const fr=document.getElementById('pframe'),img=fr&&fr.querySelector('img');
+   if(img){img.classList.remove('ok');img.onload=()=>{img.classList.add('ok');const s=fr.querySelector('.psrc');if(s)s.textContent='Ảnh thật'};img.src=r.url}
+   const cr=document.getElementById('pcredit');if(cr)cr.textContent='Ảnh do bạn tải lên';
+   toast('Đã lưu ảnh. Lần sau check-in sẽ hiện ảnh này.');
+  }catch(e){toast('Không tải được ảnh. Thử file nhỏ hơn 20MB.')}
+ };
+ inp.click();
+}
+
+// --- Ảnh minh họa dự phòng ---
+function illus(cid){return `<svg viewBox="0 0 400 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${sky(false,false,'skd')}${(SCN[cid]||SCN.hanoi)()}</svg>`}
+function foodIllus(name){
+ const hue=[...name].reduce((s,ch)=>s+ch.charCodeAt(0),0)%4;
+ const soup=['#E9C27A','#C9542F','#F1E3C6','#B5763A'][hue];
+ return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  ${R(0,0,400,300,'#7A4E2E')}${[0,1,2,3,4,5].map(i=>R(0,i*52,400,2,'#6A4026')).join('')}
+  ${O(200,170,118,'#E9DFC9')}${O(200,170,104,'#F7F2E6')}
+  <ellipse cx="200" cy="165" rx="86" ry="70" fill="${soup}"/>
+  ${[[170,140],[230,150],[200,190],[160,185],[240,185]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${18-i}" ry="10" fill="${['#F2E8D5','#7FB24A','#B9733F','#E85D3A','#F2E8D5'][i]}" opacity=".9"/>`).join('')}
+  ${[[178,128],[214,132],[196,200],[228,170]].map(([x,y])=>O(x,y,4,'#3F8E3A')).join('')}
+  <path class="steam" d="M170 70 q-12 -20 0 -40" stroke="#fff" stroke-width="4" fill="none" opacity=".7"/>
+  <path class="steam" style="animation-delay:.5s" d="M210 64 q12 -20 0 -40" stroke="#fff" stroke-width="4" fill="none" opacity=".7"/>
+  <line x1="300" y1="40" x2="250" y2="250" stroke="#C99A5B" stroke-width="7" stroke-linecap="round"/>
+  <line x1="322" y1="44" x2="268" y2="252" stroke="#C99A5B" stroke-width="7" stroke-linecap="round"/>
+  ${O(70,250,30,'#F7F2E6')}${O(62,246,6,'#D7262B')}${O(78,254,6,'#D7262B')}${O(72,240,5,'#4E9A3A')}
+ </svg>`;
+}
+function stickerSVG(pose){return `<svg viewBox="-17 -44 34 47" aria-hidden="true">${heroSVG(pose)}</svg>`}
+
+// --- Bưu thiếp check-in / món ăn ---
+function postcard(key){
+ const [id,t]=key.split(':'),c=BY[id],i=+t.slice(1),food=t[0]==='F',it=food?c.F[i]:c.L[i];
+ const day=S.done[key]||dayOf(S.hours);
+ const meta=food?`${esc(c.n)} · ${vnd(it[1])} · thưởng thức ngày ${day}`:`${esc(c.n)} · ${esc(c.p)} · check-in ngày ${day}`;
+ const pose=food?'eat':'photo raise';
+ document.getElementById('modalRoot').innerHTML=`<div class="modal" data-a="closebg"><div class="pc fadein" role="dialog" aria-label="${esc(it[0])}">
+  <div class="pframe" id="pframe">${food?foodIllus(it[0]):illus(id)}<img class="ph" alt="${esc(it[0])}">
+   <span class="ptag${food?' food':''}">${food?'ĐẶC SẢN':'CHECK-IN'}</span><span class="psrc">Ảnh minh họa</span>
+   <div class="sticker">${stickerSVG(pose)}</div></div>
+  <div class="pcb"><h2>${esc(it[0])}</h2><div class="meta">${meta}</div><div class="credit" id="pcredit"></div>
+   <input type="file" accept="image/*" id="upfile" hidden>
+   <div class="cta">${CAN_UP?`<button class="btn out" data-a="upload" data-id="${key}">${PHOTOS[key]?'Đổi ảnh':'Thêm ảnh thật'}</button>`:''}<button class="btn" data-a="close">Tiếp tục hành trình</button></div></div></div></div>`;
+ loadInto(document.getElementById('pframe'),key);
+}
+
+// --- Nhà nghỉ / homestay ---
+function stayExt(kind){
+ const hero=`<g transform="translate(${kind==='inn'?220:205},272) scale(2.3)"><g class="walkin">${heroSVG('walk')}</g></g>`;
+ if(kind==='inn')return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  ${R(0,0,400,300,'#16223F')}${[[30,30],[80,60],[350,40],[300,20]].map(([x,y])=>O(x,y,1.4,'#fff')).join('')}
+  ${R(130,40,200,224,'#E2CDA8')}${R(126,34,208,10,'#B79A6E')}
+  ${[70,120,170].map(y=>[150,205,260].map(x=>R(x,y,40,32,'#FFD978')+R(x+19,y,2,32,'#C9A35A')).join('')).join('')}
+  ${R(98,56,30,170,'#B3261E','rx="4"')}${R(102,60,22,162,'none','stroke="#FF8A80" stroke-width="1.5" rx="3"')}
+  ${['N','H','À','','N','G','H','Ỉ'].map((ch,i)=>`<text x="113" y="${82+i*19}" text-anchor="middle" font-size="16" font-weight="800" fill="#FFF3C4" font-family="Be Vietnam Pro,system-ui,sans-serif">${ch}</text>`).join('')}
+  ${R(198,206,56,58,'#FFF0B8')}${R(198,206,56,58,'none','stroke="#7A5A3C" stroke-width="4"')}${R(225,206,2,58,'#7A5A3C')}
+  ${R(0,264,400,36,'#4E535B')}${R(0,264,400,4,'#6B7078')}
+  <g transform="translate(320,264)">${O(-12,-6,7,'#222')}${O(14,-6,7,'#222')}${P('M-18 -12 Q0 -24 18 -14 L16 -8 L-16 -8 Z','#C8372D')}</g>
+  ${hero}</svg>`;
+ return `<svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs><linearGradient id="dk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E7845A"/><stop offset="1" stop-color="#F8D39A"/></linearGradient></defs>
+  ${R(0,0,400,300,'url(#dk)')}${P('M0 150 L70 80 L140 130 L220 60 L300 120 L400 70 L400 300 L0 300 Z','#5C7F63')}
+  ${P('M0 200 Q200 160 400 200 L400 300 L0 300 Z','#7BA05B')}
+  ${[100,160,240,300].map(x=>R(x,170,8,70,'#5A3B22')).join('')}
+  ${R(90,164,230,12,'#6B4425')}${R(100,104,210,60,'#A0703F')}${[0,1,2,3,4,5,6].map(i=>R(100,110+i*8,210,1.5,'#8A5E33')).join('')}
+  ${P('M80 108 L205 50 L330 108 Z','#C9A15F')}${P('M80 108 L205 50 L330 108','none','stroke="#9A7840" stroke-width="3"')}
+  ${R(190,124,30,40,'#4A2E18')}${R(150,120,26,20,'#FFD978')}${R(236,120,26,20,'#FFD978')}
+  ${O(132,124,8,'#D9452B')}${O(282,124,8,'#D9452B')}
+  ${R(160,84,90,18,'#5A3B22','rx="3"')}<text x="205" y="97.5" text-anchor="middle" font-size="12" font-weight="800" fill="#FCE7A0" letter-spacing="2" font-family="Be Vietnam Pro,system-ui,sans-serif">HOMESTAY</text>
+  ${[0,1,2,3,4].map(i=>R(196+i*2,176+i*20,26,4,'#7A5530')).join('')}${R(194,170,3,104,'#7A5530')}${R(223,170,3,104,'#7A5530')}
+  ${hero}</svg>`;
+}
+function stayInt(kind){
+ const z=['Z','z','Z'].map((t,i)=>`<text class="zzz" style="animation-delay:${i*.45}s" x="${190+i*14}" y="${140-i*16}" font-size="${22-i*4}" font-weight="800" fill="${kind==='inn'?'#3D5A80':'#FCE7A0'}">${t}</text>`).join('');
+ const sleeper=(x,y)=>`${O(x,y,13,'#F2C9A0')}${P(`M${x-12} ${y-4} q12 -12 24 0`,'#3A2A1E')}${P(`M${x-2} ${y+2} q3 2 6 0`,'none','stroke="#9A5B3A" stroke-width="1.5"')}${P(`M${x+2} ${y-2} h6`,'none','stroke="#2B2B2B" stroke-width="1.5"')}`;
+ if(kind==='inn')return `<svg class="fadein" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  ${R(0,0,400,220,'#EADCC8')}${R(0,220,400,80,'#9C7B5B')}${R(0,216,400,6,'#7A5A3C')}
+  ${R(250,46,110,80,'#1A2747')}${O(330,70,10,'#F3EBC8')}${[[262,110,14,16],[280,100,12,26],[296,106,16,20],[316,96,12,30],[332,108,16,18]].map(([x,y,w,h])=>R(x,y,w,h,'#2F3E62')).join('')}${R(250,46,110,80,'none','stroke="#FFFFFF" stroke-width="6"')}${R(304,46,3,80,'#FFFFFF')}
+  ${R(40,40,110,30,'#F7F7F7','rx="4"')}${R(48,60,94,3,'#CFCFCF')}
+  ${P('M190 60 L215 40 L240 60 Z','#EBD9A6','stroke="#A8915A" stroke-width="2"')}
+  ${R(60,170,280,72,'#7A5A3C','rx="6"')}${R(66,160,268,30,'#FFFFFF','rx="6"')}
+  ${R(74,146,74,26,'#F2F2F2','rx="10"')}${sleeper(112,150)}
+  ${P('M120 168 Q200 150 334 166 L334 196 L124 200 Z','#4F7FB8')}${P('M150 172 Q230 160 334 172','none','stroke="#6E97C9" stroke-width="3"')}
+  ${R(340,180,40,40,'#8A6A4A','rx="3"')}${R(352,150,16,30,'#F2E6C2')}${O(360,146,14,'#FFE7A0','opacity=".85"')}
+  ${R(352,190,16,10,'#D9452B','rx="2"')}
+  ${z}</svg>`;
+ return `<svg class="fadein" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  ${R(0,0,400,230,'#7A5030')}${[0,1,2,3,4,5,6,7,8,9].map(i=>R(i*40,0,2,230,'#6A4426')).join('')}
+  ${R(0,230,400,70,'#C9A66B')}${[0,1,2,3].map(i=>R(0,240+i*16,400,2,'#B38F55')).join('')}
+  ${R(260,40,100,80,'#1E2A4A')}${P('M260 120 L295 80 L320 100 L360 70 L360 120 Z','#2E4A3E')}${O(330,60,9,'#F3EBC8')}${R(260,40,100,80,'none','stroke="#5A3B22" stroke-width="6"')}
+  ${O(110,60,16,'#E85D3A')}${O(110,60,26,'#FFB36B','opacity=".25"')}${R(109,30,2,14,'#3A2A1E')}
+  ${R(50,210,300,30,'#E9DFC9','rx="6"')}${R(60,198,70,22,'#F7F2E6','rx="9"')}${sleeper(96,200)}
+  ${P('M110 212 Q200 196 344 210 L344 236 L114 238 Z','#C8372D')}${[0,1,2,3,4,5].map(i=>R(140+i*34,206,14,30,'#E3A21A','opacity=".55"')).join('')}
+  ${P('M40 240 L70 120 L330 120 L360 240 Z','#FFFFFF','opacity=".22" stroke="#FFFFFF" stroke-opacity=".5"')}${R(70,112,260,8,'#FFFFFF','opacity=".4"')}
+  ${z}</svg>`;
+}
+function stayScene(kind){
+ const c=BY[S.city],key=c.id+':'+kind,inn=kind==='inn';
+ document.getElementById('modalRoot').innerHTML=`<div class="modal" data-a="closebg"><div class="pc fadein" role="dialog" aria-label="Nghỉ đêm">
+  <div class="pframe" id="pframe">${stayExt(kind)}<img class="ph" alt="">
+   <span class="ptag">${inn?'NHẬN PHÒNG':'NGỦ NHỜ HOMESTAY'}</span><span class="psrc">Ảnh minh họa</span></div>
+  <div class="pcb"><h2>${inn?'Nhà nghỉ ở '+esc(c.n):'Homestay nhà dân ở '+esc(c.n)}</h2>
+   <div class="meta">${inn?`Phòng đôi ${vnd(c.stay)} · ngủ đến ${clock(S.hours)} ngày ${dayOf(S.hours)} · năng lượng đầy`:'Phụ chủ nhà nấu cơm, rửa bát để đổi chỗ ngủ · +40 năng lượng'}</div>
+   <div class="credit" id="pcredit"></div><input type="file" accept="image/*" id="upfile" hidden>
+   <div class="cta">${CAN_UP?`<button class="btn out" data-a="upload" data-id="${key}">${PHOTOS[key]?'Đổi ảnh':'Thêm ảnh thật'}</button>`:''}<button class="btn" data-a="close">Thức dậy, đi tiếp</button></div></div></div></div>`;
+ const fr=document.getElementById('pframe');
+ setTimeout(()=>{if(fr.isConnected&&!fr.querySelector('img.ok')){fr.querySelector('svg').outerHTML=stayInt(kind)}},REDUCE?0:1900);
+ loadInto(fr,key);
+}
+
+// --- Album trong hộ chiếu ---
+function albumView(){
+ const keys=Object.keys(S.done).filter(k=>/:[LF]\d+$/.test(k));
+ if(!keys.length)return `<div class="sec"><h3>Album ảnh</h3><p class="note" style="margin:0">Chưa có ảnh. Check-in hoặc ăn đặc sản để lưu bưu thiếp vào album.</p></div>`;
+ return `<div class="sec"><h3>Album ảnh · ${keys.length}</h3><div class="album">${keys.map(k=>{const [id,t]=k.split(':'),c=BY[id],i=+t.slice(1),f=t[0]==='F',it=f?c.F[i]:c.L[i];
+  return `<button data-a="view" data-id="${k}" aria-label="${esc(it[0])}"><div class="th" data-k="${k}">${f?foodIllus(it[0]):illus(id)}<img class="ph" alt="" loading="lazy"></div><span>${esc(it[0])}</span></button>`}).join('')}</div></div>`;
+}
+
+// ===== MODAL =====
+function setupModal(){
+ document.getElementById('modalRoot').innerHTML=`<div class="modal"><form class="card" id="setup">
+  <h1>Xuyên Việt Ký</h1>
+  <p class="lead">Nhập vai một lữ khách với ngân sách ít ỏi. Đi khắp ${C.length} điểm đến từ Hà Giang đến Phú Quốc, check-in, ăn đặc sản, làm thêm kiếm lộ phí và sưu tầm dấu hộ chiếu.</p>
+  <div class="field"><label for="pname">Tên nhân vật</label><input id="pname" maxlength="24" value="Lữ khách"></div>
+  <div class="field"><label>Chọn vai</label><div class="arch">${Object.entries(ARCH).map(([k,a],i)=>`<label><input type="radio" name="arch" id="arch-${k}" value="${k}" ${i===0?'checked':''}><b>${a.n}</b><span>${a.d}</span></label>`).join('')}</div></div>
+  <div class="field"><label for="pstart">Xuất phát từ</label><select id="pstart"><option value="hanoi">Hà Nội</option><option value="hcm">TP.HCM</option></select></div>
+  <div class="cta"><button class="btn big" type="submit">Lên đường</button></div></form></div>`;
+ document.getElementById('setup').addEventListener('submit',e=>{e.preventDefault();
+  const arch=document.querySelector('input[name=arch]:checked').value;
+  newGame(document.getElementById('pname').value.trim(),arch,document.getElementById('pstart').value);
+  document.getElementById('modalRoot').innerHTML='';});
+}
+function resetModal(){
+ document.getElementById('modalRoot').innerHTML=`<div class="modal"><div class="card"><h1 style="font-size:24px">Chơi lại từ đầu?</h1><p class="lead">Toàn bộ tiến trình, tiền và dấu hộ chiếu hiện tại sẽ bị xóa.</p><div class="cta"><button class="btn out" data-a="close">Giữ hành trình</button><button class="btn" style="background:var(--red)" data-a="confirmReset">Xóa và chơi lại</button></div></div></div>`;
+}
+
+// ===== SỰ KIỆN =====
+document.addEventListener('click',e=>{
+ if(busy)return;
+ const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.id;
+ if(a==='tab'){S.tab=id;save();render()}
+ else if(a==='pick'){if(id===S.city){S.tab='here'}else{S.dest=id;S.tab='go'}save();render()}
+ else if(a==='go')travel(id);
+ else if(a==='checkin')checkin(+id);
+ else if(a==='eat')eat(+id);
+ else if(a==='work')work();
+ else if(a==='ans')answer(id);
+ else if(a==='rest')rest(id);
+ else if(a==='reset')resetModal();
+ else if(a==='close')document.getElementById('modalRoot').innerHTML='';
+ else if(a==='closebg'){if(e.target===b)document.getElementById('modalRoot').innerHTML=''}
+ else if(a==='view')postcard(id);
+ else if(a==='upload')doUpload(id);
+ else if(a==='confirmReset'){try{localStorage.removeItem(KEY)}catch(e){}document.getElementById('modalRoot').innerHTML='';setupModal()}
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('g[data-a]')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+
+// ===== KHỞI ĐỘNG =====
+S=load();
+if(S){render()}else{
+ // Màn hình mẫu phía sau form tạo nhân vật
+ S={name:'Lữ khách',arch:'phuot',money:2000000,maxE:100,energy:100,hours:8,city:'hanoi',visited:{hanoi:1},done:{},quiz:{},work:{},route:['hanoi'],log:[],tab:'here',dest:null};
+ render();S=null;setupModal();
+}
+</script>
+
+</body>
+</html>
