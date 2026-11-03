@@ -293,7 +293,7 @@ a.btn{text-decoration:none;display:inline-block}
     <div id="map"></div>
     <div id="plaza" hidden><canvas id="pzcv" aria-label="Quảng trường, chạm để di chuyển nhân vật"></canvas>
      <div class="pzbar"><input id="pzmsg" maxlength="60" placeholder="Nói gì đó với mọi người…" aria-label="Tin nhắn"><button class="btn" data-a="pzsay">Gửi</button><button class="btn sun" data-a="pzzo">Zô!</button><button class="btn out" data-a="sndtoggle" aria-pressed="false">Bật âm thanh</button></div>
-     <div class="pzinfo"><b id="pzonline"></b><span>Chạm sàn để đi · chạm ghế để ngồi · chạm xe đẩy để gọi món</span></div></div>
+     <div class="pzinfo"><b id="pzonline"></b><span id="pzmusic"></span><span>Chạm sàn để đi · chạm ghế để ngồi · chạm xe đẩy để gọi món</span></div></div>
     <div class="maphint" id="maphint">Chạm vào một điểm để chọn nơi đến</div>
   </section>
   <section class="panel" aria-label="Bảng hành động">
@@ -1129,13 +1129,15 @@ function sndInit(){
  const c=SND.ctx=new AC(),comp=c.createDynamicsCompressor();comp.connect(c.destination);
  SND.master=c.createGain();SND.master.gain.value=SND.cfg.vol;SND.master.connect(comp);
  SND.music=c.createGain();SND.music.gain.value=SND.cfg.music?.32:0;SND.music.connect(SND.master);
+ SND.wet=c.createGain();SND.wet.gain.value=.2;const dl=c.createDelay(1);dl.delayTime.value=.33;const fb=c.createGain();fb.gain.value=.32;
+ SND.music.connect(SND.wet);SND.wet.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(SND.master);
  SND.sfx=c.createGain();SND.sfx.gain.value=.85;SND.sfx.connect(SND.master);
  const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;SND.nbuf=b;
  return true;
 }
 function sndStart(){if(!sndInit())return;SND.ctx.resume();SND.on=true;if(!SND.timer){SND.next=SND.ctx.currentTime+.15;SND.timer=setInterval(sndSchedule,60)}sndUI()}
 function sndStop(){SND.on=false;clearInterval(SND.timer);SND.timer=0;if(SND.ctx)SND.ctx.suspend();try{speechSynthesis.cancel()}catch(e){}sndUI()}
-function sndSet(k,v){SND.cfg[k]=v;sndSave();if(!SND.ctx)return;if(k==='vol')SND.master.gain.value=v;if(k==='music')SND.music.gain.value=v?.32:0}
+function sndSet(k,v){SND.cfg[k]=v;sndSave();if(!SND.ctx)return;if(k==='vol')SND.master.gain.value=v;if(k==='music'){SND.music.gain.cancelScheduledValues(SND.ctx.currentTime);SND.music.gain.value=v?.32:0}}
 function tone(f,t,d,type,g,dest,bend){
  const c=SND.ctx,o=c.createOscillator(),a=c.createGain();o.type=type;
  o.frequency.setValueAtTime(f*(bend||1),t);if(bend)o.frequency.exponentialRampToValueAtTime(f,t+.07);
@@ -1149,25 +1151,68 @@ function noise(t,d,g,freq,q,type,dest,rise){
  else{a.gain.setValueAtTime(g,t);a.gain.exponentialRampToValueAtTime(.0001,t+d)}
  s.connect(f);f.connect(a);a.connect(dest||SND.sfx);s.start(t,Math.random()*1.5,d+.05);
 }
-// Nhạc nền: thang ngũ cung, tiếng gảy kiểu đàn tranh, mõ gõ nhịp
-const PENTA=[220,261.63,293.66,329.63,392,440,523.25,587.33,659.25,783.99];
-const ROOTS=[110,130.81,146.83,98];
+// Nhạc nền theo từng địa điểm
+const ST={
+ hanoi:{n:'Phố cổ Hà Nội · đàn bầu',bpm:80,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17,19,21],roots:[130.81,174.61,196,146.83],lead:'bau',lp:[.6,.15],bass:'sine',dr:{mo:[2,6],clap:[7]},echo:.2},
+ halong:{n:'Vịnh Hạ Long · sáo và sóng biển',bpm:70,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16,19],roots:[146.83,196,220,164.81],lead:'flute',lp:[.45,.1],bass:'pad',dr:{},amb:'waves',echo:.35},
+ sapa:{n:'Sa Pa · khèn và sáo Mông',bpm:96,steps:6,base:293.66,deg:[0,3,5,7,10,12,15,17,19],roots:[146.83,146.83,130.81,146.83],lead:'flute',lp:[.7,.35],bass:'drone',dr:{tom:[0],shaker:[3]},echo:.3},
+ hagiang:{n:'Hà Giang · chợ phiên vùng cao',bpm:108,steps:8,base:329.63,deg:[0,3,5,7,10,12,15,17],roots:[164.81,164.81,146.83,164.81],lead:'flute',lp:[.65,.4],bass:'drone',dr:{tom:[0,3],mo:[6],shaker:[2,6]},echo:.25},
+ ninhbinh:{n:'Ninh Bình · trống chèo',bpm:100,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17],roots:[130.81,196,174.61,196],lead:'flute',lp:[.6,.3],bass:'sine',dr:{tom:[0,5],clap:[2,6]},echo:.15},
+ phongnha:{n:'Phong Nha · tiếng vọng hang động',bpm:60,steps:8,base:220,deg:[0,3,5,7,10,12,15],roots:[110,110,98,103.83],lead:'pluck',lp:[.55,.12],bass:'drone',dr:{gong:[0]},amb:'drip',echo:.55},
+ hue:{n:'Cố đô Huế · đàn tranh điệu Nam',bpm:68,steps:8,base:293.66,deg:[0,3,5,7,8,12,15,17,19],roots:[146.83,196,146.83,130.81],lead:'pluck',lp:[.55,.15],bass:'sine',dr:{gong:[0],mo:[4]},echo:.3},
+ danang:{n:'Đà Nẵng · thành phố biển trẻ trung',bpm:112,steps:8,base:329.63,deg:[0,2,4,7,9,12,14,16],roots:[164.81,220,246.94,185],lead:'marimba',lp:[.6,.4],bass:'sine',dr:{kick:[0,4],hat:[1,3,5,7],clap:[2,6]},echo:.15},
+ hoian:{n:'Hội An · đèn lồng phố Hội',bpm:92,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17],roots:[130.81,174.61,196,130.81],lead:'pluck',lp:[.65,.25],bass:'sine',dr:{mo:[2,6],shaker:[1,5]},echo:.25},
+ quynhon:{n:'Quy Nhơn · trống trận đất võ',bpm:120,steps:8,base:220,deg:[0,3,5,7,10,12,15],roots:[110,110,98,130.81],lead:'flute',lp:[.45,.25],bass:'sine',dr:{tom:[0,2,3,6],kick:[0,4],clap:[4]},echo:.15},
+ nhatrang:{n:'Nha Trang · biển nhiệt đới',bpm:104,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16,19],roots:[146.83,196,220,164.81],lead:'marimba',lp:[.65,.35],bass:'sine',dr:{shaker:[1,3,5,7],kick:[0,3,6]},amb:'waves',echo:.2},
+ dalat:{n:'Đà Lạt · điệu valse mộng mơ',bpm:88,steps:6,base:261.63,deg:[0,2,4,7,9,11,12,14,16],roots:[130.81,110,174.61,196],lead:'piano',lp:[.7,.25],bass:'waltz',dr:{},echo:.35},
+ muine:{n:'Mũi Né · gió đồi cát',bpm:96,steps:8,base:277.18,deg:[0,2,4,7,9,12,14,16],roots:[138.59,185,207.65,155.56],lead:'marimba',lp:[.55,.25],bass:'sine',dr:{shaker:[1,3,5,7],kick:[0,5]},amb:'waves',echo:.25},
+ hcm:{n:'Sài Gòn · lo-fi phố đêm',bpm:88,steps:8,base:220,deg:[0,3,5,7,10,12,15,17],roots:[110,87.31,130.81,98],lead:'piano',lp:[.45,.2],bass:'pad',dr:{kick:[0,5],clap:[2,6],hat:[0,1,2,3,4,5,6,7]},echo:.2},
+ cantho:{n:'Cần Thơ · đờn ca tài tử',bpm:72,steps:8,base:220,deg:[0,2,5,7,8,12,14,17],roots:[110,146.83,110,98],lead:'kim',lp:[.6,.2],bass:'sine',dr:{clap:[0],mo:[4]},echo:.25},
+ phuquoc:{n:'Phú Quốc · hoàng hôn đảo ngọc',bpm:84,steps:8,base:261.63,deg:[0,2,4,7,9,12,14,16],roots:[130.81,174.61,196,220],lead:'marimba',lp:[.5,.2],bass:'pad',dr:{shaker:[2,6]},amb:'waves',echo:.35},
+};
+function curCity(){try{if(LIVE.on)return PZ.city}catch(e){}return (S&&S.city)||'hanoi'}
+function vib(o,t,d,rate,depth){const c=SND.ctx,l=c.createOscillator(),g=c.createGain();l.frequency.value=rate;g.gain.value=depth;l.connect(g);g.connect(o.frequency);l.start(t);l.stop(t+d+.05)}
+const INS={
+ pluck:(f,t)=>{tone(f,t,.6,'triangle',.2,SND.music,1.025);tone(f*2,t,.25,'sine',.05,SND.music)},
+ kim:(f,t)=>{tone(f,t,.8,'triangle',.2,SND.music,.94);tone(f*2,t,.3,'sine',.05,SND.music)},
+ bau:(f,t)=>{const c=SND.ctx,o=c.createOscillator(),a=c.createGain();o.type='sine';o.frequency.setValueAtTime(f*.89,t);o.frequency.exponentialRampToValueAtTime(f,t+.12);vib(o,t+.15,1,5.5,f*.012);
+  a.gain.setValueAtTime(0,t);a.gain.linearRampToValueAtTime(.22,t+.04);a.gain.exponentialRampToValueAtTime(.0001,t+1.1);o.connect(a);a.connect(SND.music);o.start(t);o.stop(t+1.2)},
+ flute:(f,t)=>{const c=SND.ctx,o=c.createOscillator(),a=c.createGain();o.type='sine';o.frequency.value=f;vib(o,t+.1,.7,6,f*.008);
+  a.gain.setValueAtTime(0,t);a.gain.linearRampToValueAtTime(.17,t+.06);a.gain.exponentialRampToValueAtTime(.0001,t+.7);o.connect(a);a.connect(SND.music);o.start(t);o.stop(t+.8);noise(t,.12,.02,f*2,2,'bandpass',SND.music)},
+ marimba:(f,t)=>{tone(f,t,.35,'sine',.22,SND.music);tone(f*4,t,.08,'sine',.05,SND.music)},
+ piano:(f,t)=>{tone(f,t,1,'triangle',.15,SND.music);tone(f*2,t,.5,'sine',.05,SND.music)},
+};
+const DR={
+ mo:t=>tone(1500,t,.05,'sine',.1,SND.music),
+ clap:t=>{noise(t,.03,.12,2600,1.2,'bandpass',SND.music);noise(t+.02,.04,.08,2600,1.2,'bandpass',SND.music)},
+ tom:t=>tone(150,t,.3,'sine',.3,SND.music,1.5),
+ kick:t=>tone(55,t,.28,'sine',.45,SND.music,2.4),
+ hat:t=>noise(t,.035,.05,8500,1,'highpass',SND.music),
+ shaker:t=>noise(t,.06,.05,6000,1,'highpass',SND.music),
+ gong:t=>{tone(110,t,2.6,'sine',.18,SND.music);tone(167,t,2,'sine',.08,SND.music);tone(293,t,1.2,'sine',.04,SND.music)},
+};
 function sndSchedule(){
- if(!SND.on||!SND.ctx)return;const c=SND.ctx,e8=60/92/2;
+ if(!SND.on||!SND.ctx)return;const c=SND.ctx,key=curCity(),st=ST[key]||ST.hanoi;
+ if(key!==SND.key){SND.key=key;SND.step=0;SND.mi=3;
+  if(SND.cfg.music){const g=SND.music.gain;g.cancelScheduledValues(c.currentTime);g.setValueAtTime(0,c.currentTime);g.linearRampToValueAtTime(.32,c.currentTime+2.5)}
+  if(SND.wet)SND.wet.gain.setTargetAtTime(st.echo,c.currentTime,.3);SND.next=Math.max(SND.next,c.currentTime+.1);sndUI()}
+ const e8=60/st.bpm/2,N=st.steps,sc=st.deg.map(s=>st.base*Math.pow(2,s/12));
  while(SND.next<c.currentTime+.25){
-  const t=SND.next,i=SND.step,pos=i%8,bar=Math.floor(i/8)%4;
+  const t=SND.next,i=SND.step,pos=i%N,bar=Math.floor(i/N)%st.roots.length,r=st.roots[bar];
   if(SND.cfg.music){
-   if(pos===0||pos===4)tone(ROOTS[bar],t,.9,'sine',.42,SND.music);
-   if(pos===0)tone(ROOTS[bar]*1.5,t,1.2,'sine',.12,SND.music);
-   const p=pos%2===0?.72:.3;
-   if(Math.random()<p){SND.mi=Math.max(0,Math.min(PENTA.length-1,SND.mi+[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));
-    const f=PENTA[SND.mi];tone(f,t,.55,'triangle',.2,SND.music,1.025);tone(f*2,t,.25,'sine',.05,SND.music)}
-   if(pos===2||pos===6)tone(1480,t,.05,'sine',.1,SND.music);
-   if(pos===7&&Math.random()<.4)tone(1180,t,.04,'sine',.07,SND.music);
+   if(st.bass==='sine'&&(pos===0||pos===N/2))tone(r,t,.9,'sine',.4,SND.music);
+   if(st.bass==='pad'&&pos===0){[r,r*1.5,r*2.0,r*2.38].forEach((f,k)=>tone(f,t,e8*N*1.1,'sine',k?.06:.2,SND.music))}
+   if(st.bass==='drone'&&pos===0){const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.connect(SND.music);tone(r,t,e8*N*1.05,'sawtooth',.07,lp);tone(r*1.5,t,e8*N*1.05,'sawtooth',.05,lp)}
+   if(st.bass==='waltz'){if(pos===0)tone(r,t,.8,'sine',.4,SND.music);if(pos===2||pos===4){tone(r*2,t,.3,'triangle',.08,SND.music);tone(r*2.52,t,.3,'triangle',.06,SND.music)}}
+   if(Math.random()<(pos%2===0?st.lp[0]:st.lp[1])){SND.mi=Math.max(0,Math.min(sc.length-1,SND.mi+[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));(INS[st.lead]||INS.pluck)(sc[SND.mi],t)}
+   for(const k in st.dr)if(st.dr[k].includes(pos))DR[k](t);
+   if(st.amb==='waves'&&pos===0&&bar%2===0)noise(t,3.4,.1,450,.5,'lowpass',SND.music,true);
+   if(st.amb==='drip'&&Math.random()<.18)tone(1900+Math.random()*1400,t,.18,'sine',.05,SND.music);
   }
   SND.next+=e8;SND.step++;
  }
 }
+
 const SFX={
  join:t=>{tone(1318.5,t,.14,'sine',.12);tone(1975.5,t+.05,.12,'sine',.06)},
  zo:t=>{tone(2093,t,.32,'sine',.18);tone(2637,t+.035,.34,'sine',.14);noise(t,.06,.08,6000,1,'highpass')},
@@ -1198,7 +1243,9 @@ function speak(text,kind){
 }
 try{speechSynthesis.onvoiceschanged=()=>sndUI()}catch(e){}
 function sndUI(){
- document.querySelectorAll('[data-a="sndtoggle"]').forEach(b=>{b.textContent=SND.on?'Tắt âm thanh':'Bật âm thanh';b.setAttribute('aria-pressed',String(SND.on))});
+ document.querySelectorAll('[data-a="sndtoggle"]').forEach(b=>{b.textContent=SND.on?'Tắt âm thanh':'Bật âm thanh';b.setAttribute('aria-pressed',String(SND.on));b.title=SND.on?'Đang phát: '+(ST[curCity()]||ST.hanoi).n:''});
+ const pi=document.getElementById('pzmusic');if(pi)pi.textContent=SND.on&&SND.cfg.music?'♪ '+(ST[curCity()]||ST.hanoi).n:'';
+ const now=document.getElementById('sndnow');if(now){const st=ST[curCity()]||ST.hanoi;now.textContent='Đang phát: '+st.n}
  const n=document.getElementById('sndvoice');
  if(n)n.textContent=('speechSynthesis' in window)?(viVoice()?'Giọng đọc: '+viVoice().name:'Máy chưa có giọng đọc tiếng Việt. Cài thêm trong Windows: Cài đặt → Thời gian & ngôn ngữ → Giọng nói → Thêm giọng → Tiếng Việt.'):'Trình duyệt không hỗ trợ giọng đọc.';
 }
@@ -1663,6 +1710,7 @@ function drawLiveHUD(x){
  rrect(x,20,92,250,64,10);x.fillStyle='rgba(30,107,88,.92)';x.fill();
  x.fillStyle='#D3E7DF';x.font='700 12px "Be Vietnam Pro",system-ui,sans-serif';x.fillText('ĐANG Ở',34,113);
  x.fillStyle='#FFFFFF';x.font='24px Bungee,system-ui,sans-serif';x.fillText(c.n.toUpperCase(),34,143);
+ if(SND.on&&SND.cfg.music){const st=ST[PZ.city];if(st){x.font='600 13px "Be Vietnam Pro",system-ui,sans-serif';const t='♪ '+st.n,tw2=x.measureText(t).width+20;rrect(x,20,162,tw2,24,12);x.fillStyle='rgba(20,22,26,.7)';x.fill();x.fillStyle='#FCE7A0';x.fillText(t,30,178.5)}}
  rrect(x,W-230,92,210,64,10);x.fillStyle='rgba(20,22,26,.8)';x.fill();
  x.fillStyle='#BFC7C3';x.font='700 12px "Be Vietnam Pro",system-ui,sans-serif';x.fillText(PZ.phase==='play'?'XE CHẠY SAU':'ĐANG DI CHUYỂN',W-216,113);
  x.fillStyle='#F5C542';x.font='26px Bungee,system-ui,sans-serif';x.fillText(PZ.phase==='play'?clock:'…',W-216,145);
@@ -1706,7 +1754,8 @@ function liveEnter(){
     <div class="lvrow"><button class="btn out" data-a="lvgo">Xuất phát ngay</button><button class="btn out" data-a="lvhide">Ẩn bảng (phím H)</button><a class="btn out" href="#">Về game</a></div></section>
    <section><h3>4. Âm thanh</h3>
     <div class="cta" style="justify-content:flex-start"><button class="btn sun" data-a="sndtoggle">Bật âm thanh</button></div>
-    <label class="chk"><input type="checkbox" id="sndmusic" ${SND.cfg.music?'checked':''}> Nhạc nền ngũ cung</label>
+    <label class="chk"><input type="checkbox" id="sndmusic" ${SND.cfg.music?'checked':''}> Nhạc nền theo từng địa điểm</label>
+    <p class="note" id="sndnow"></p>
     <label class="chk"><input type="checkbox" id="sndsfx" ${SND.cfg.sfx?'checked':''}> Hiệu ứng (zô, quà, còi xe…)</label>
     <div class="field"><label for="sndtts">Giọng đọc</label><select id="sndtts"><option value="off">Tắt</option><option value="gift">Chỉ đọc quà và sự kiện</option><option value="all">Đọc cả bình luận</option></select></div>
     <div class="field"><label for="sndvol">Âm lượng</label><input type="range" id="sndvol" min="0" max="1" step="0.05" value="${SND.cfg.vol}"></div>
