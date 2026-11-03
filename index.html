@@ -278,6 +278,10 @@ html:has(body.is-live),.is-live{background:#0E1513!important}
 .lvrow .field{flex:1;min-width:90px}
 .lvrow .field input,.lvrow .field select{width:100%}
 a.btn{text-decoration:none;display:inline-block}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px}
+.chk input{width:18px;height:18px;accent-color:var(--jade)}
+.lvctl .field input[type=range]{padding:0;accent-color:var(--jade)}
+@media (max-width:520px){.pzbar{flex-wrap:wrap}.pzbar input{flex-basis:100%}}
 @media (max-width:860px){.lv{flex-direction:column;height:auto}#lvcv{width:100%;height:auto}.lvctl{width:auto}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -288,7 +292,7 @@ a.btn{text-decoration:none;display:inline-block}
     <div class="vswitch" role="group" aria-label="Chế độ xem"><button data-a="vsw" data-id="map" aria-pressed="true">Bản đồ</button><button data-a="vsw" data-id="plaza" aria-pressed="false">Quảng trường</button></div>
     <div id="map"></div>
     <div id="plaza" hidden><canvas id="pzcv" aria-label="Quảng trường, chạm để di chuyển nhân vật"></canvas>
-     <div class="pzbar"><input id="pzmsg" maxlength="60" placeholder="Nói gì đó với mọi người…" aria-label="Tin nhắn"><button class="btn" data-a="pzsay">Gửi</button><button class="btn sun" data-a="pzzo">Zô!</button></div>
+     <div class="pzbar"><input id="pzmsg" maxlength="60" placeholder="Nói gì đó với mọi người…" aria-label="Tin nhắn"><button class="btn" data-a="pzsay">Gửi</button><button class="btn sun" data-a="pzzo">Zô!</button><button class="btn out" data-a="sndtoggle" aria-pressed="false">Bật âm thanh</button></div>
      <div class="pzinfo"><b id="pzonline"></b><span>Chạm sàn để đi · chạm ghế để ngồi · chạm xe đẩy để gọi món</span></div></div>
     <div class="maphint" id="maphint">Chạm vào một điểm để chọn nơi đến</div>
   </section>
@@ -1115,6 +1119,90 @@ async function doShare(){
  toast('Đã tải ảnh về máy. Lời chú thích đã được copy.');
 }
 
+// ===== ÂM THANH (tự tổng hợp, không cần file nhạc) =====
+const SND={ctx:null,master:null,music:null,sfx:null,nbuf:null,on:false,timer:0,next:0,step:0,mi:4,last:{},q:0,
+ cfg:{music:true,sfx:true,tts:'gift',vol:.7}};
+try{Object.assign(SND.cfg,JSON.parse(localStorage.getItem('xvk.snd')||'{}'))}catch(e){}
+function sndSave(){try{localStorage.setItem('xvk.snd',JSON.stringify(SND.cfg))}catch(e){}}
+function sndInit(){
+ if(SND.ctx)return true;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;
+ const c=SND.ctx=new AC(),comp=c.createDynamicsCompressor();comp.connect(c.destination);
+ SND.master=c.createGain();SND.master.gain.value=SND.cfg.vol;SND.master.connect(comp);
+ SND.music=c.createGain();SND.music.gain.value=SND.cfg.music?.32:0;SND.music.connect(SND.master);
+ SND.sfx=c.createGain();SND.sfx.gain.value=.85;SND.sfx.connect(SND.master);
+ const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;SND.nbuf=b;
+ return true;
+}
+function sndStart(){if(!sndInit())return;SND.ctx.resume();SND.on=true;if(!SND.timer){SND.next=SND.ctx.currentTime+.15;SND.timer=setInterval(sndSchedule,60)}sndUI()}
+function sndStop(){SND.on=false;clearInterval(SND.timer);SND.timer=0;if(SND.ctx)SND.ctx.suspend();try{speechSynthesis.cancel()}catch(e){}sndUI()}
+function sndSet(k,v){SND.cfg[k]=v;sndSave();if(!SND.ctx)return;if(k==='vol')SND.master.gain.value=v;if(k==='music')SND.music.gain.value=v?.32:0}
+function tone(f,t,d,type,g,dest,bend){
+ const c=SND.ctx,o=c.createOscillator(),a=c.createGain();o.type=type;
+ o.frequency.setValueAtTime(f*(bend||1),t);if(bend)o.frequency.exponentialRampToValueAtTime(f,t+.07);
+ a.gain.setValueAtTime(0,t);a.gain.linearRampToValueAtTime(g,t+.006);a.gain.exponentialRampToValueAtTime(.0001,t+d);
+ o.connect(a);a.connect(dest||SND.sfx);o.start(t);o.stop(t+d+.05);
+}
+function noise(t,d,g,freq,q,type,dest,rise){
+ const c=SND.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),a=c.createGain();
+ s.buffer=SND.nbuf;f.type=type||'bandpass';f.frequency.value=freq;f.Q.value=q;
+ if(rise){a.gain.setValueAtTime(.0001,t);a.gain.exponentialRampToValueAtTime(g,t+d*.35);a.gain.exponentialRampToValueAtTime(.0001,t+d)}
+ else{a.gain.setValueAtTime(g,t);a.gain.exponentialRampToValueAtTime(.0001,t+d)}
+ s.connect(f);f.connect(a);a.connect(dest||SND.sfx);s.start(t,Math.random()*1.5,d+.05);
+}
+// Nhạc nền: thang ngũ cung, tiếng gảy kiểu đàn tranh, mõ gõ nhịp
+const PENTA=[220,261.63,293.66,329.63,392,440,523.25,587.33,659.25,783.99];
+const ROOTS=[110,130.81,146.83,98];
+function sndSchedule(){
+ if(!SND.on||!SND.ctx)return;const c=SND.ctx,e8=60/92/2;
+ while(SND.next<c.currentTime+.25){
+  const t=SND.next,i=SND.step,pos=i%8,bar=Math.floor(i/8)%4;
+  if(SND.cfg.music){
+   if(pos===0||pos===4)tone(ROOTS[bar],t,.9,'sine',.42,SND.music);
+   if(pos===0)tone(ROOTS[bar]*1.5,t,1.2,'sine',.12,SND.music);
+   const p=pos%2===0?.72:.3;
+   if(Math.random()<p){SND.mi=Math.max(0,Math.min(PENTA.length-1,SND.mi+[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));
+    const f=PENTA[SND.mi];tone(f,t,.55,'triangle',.2,SND.music,1.025);tone(f*2,t,.25,'sine',.05,SND.music)}
+   if(pos===2||pos===6)tone(1480,t,.05,'sine',.1,SND.music);
+   if(pos===7&&Math.random()<.4)tone(1180,t,.04,'sine',.07,SND.music);
+  }
+  SND.next+=e8;SND.step++;
+ }
+}
+const SFX={
+ join:t=>{tone(1318.5,t,.14,'sine',.12);tone(1975.5,t+.05,.12,'sine',.06)},
+ zo:t=>{tone(2093,t,.32,'sine',.18);tone(2637,t+.035,.34,'sine',.14);noise(t,.06,.08,6000,1,'highpass')},
+ zoBig:t=>{noise(t,1.6,.35,900,.6,'bandpass',SND.sfx,true);[440,523.25,659.25,880].forEach((f,i)=>tone(f,t+i*.08,.7,'triangle',.16));for(let k=0;k<6;k++){const u=t+.1+Math.random()*.6;tone(2093+Math.random()*500,u,.25,'sine',.1)}},
+ order:t=>{tone(880,t,.7,'sine',.14);tone(1760,t,.4,'sine',.05);tone(1320,t+.12,.5,'sine',.07)},
+ photo:t=>{noise(t,.035,.4,3500,.8,'highpass');noise(t+.07,.05,.3,2500,.8,'highpass')},
+ gift:t=>{[523.25,659.25,783.99,1046.5,1318.5,1567.98].forEach((f,i)=>tone(f,t+i*.06,.45,'triangle',.13));noise(t+.3,.6,.05,8000,1,'highpass')},
+ like:t=>tone(620,t,.12,'sine',.12,SND.sfx,.7),
+ follow:t=>{tone(784,t,.3,'sine',.15);tone(1046.5,t+.12,.45,'sine',.15)},
+ vote:t=>tone(1046.5,t,.08,'square',.05),
+ horn:t=>{const c=SND.ctx,lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1400;lp.connect(SND.sfx);
+  [[t,.32],[t+.42,.5]].forEach(([u,d])=>{tone(392,u,d,'sawtooth',.13,lp);tone(493.88,u,d,'sawtooth',.11,lp)})},
+ arrive:t=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,t+i*.12,.5,'triangle',.14)),
+ boom:t=>{noise(t,1.1,.5,180,.7,'lowpass');tone(70,t,.6,'sine',.3,SND.sfx,1.8)},
+};
+const SFX_GAP={join:.12,zo:.08,like:.15,vote:.1,order:.3,photo:.3};
+function sfx(n){
+ if(!SND.on||!SND.cfg.sfx||!SND.ctx||!SFX[n])return;const t=SND.ctx.currentTime;
+ if(SND.last[n]&&t-SND.last[n]<(SFX_GAP[n]||0))return;SND.last[n]=t;try{SFX[n](t+.01)}catch(e){}
+}
+function viVoice(){try{return speechSynthesis.getVoices().find(v=>/^vi/i.test(v.lang))||null}catch(e){return null}}
+function speak(text,kind){
+ if(!SND.on||SND.cfg.tts==='off'||!('speechSynthesis' in window))return;
+ if(kind==='chat'&&SND.cfg.tts!=='all')return;
+ const v=viVoice();if(!v)return;if(SND.q>=3)return;
+ const u=new SpeechSynthesisUtterance(String(text).slice(0,120));u.voice=v;u.lang=v.lang;u.rate=1.05;u.volume=Math.min(1,SND.cfg.vol+.2);
+ SND.q++;u.onend=u.onerror=()=>{SND.q=Math.max(0,SND.q-1)};speechSynthesis.speak(u);
+}
+try{speechSynthesis.onvoiceschanged=()=>sndUI()}catch(e){}
+function sndUI(){
+ document.querySelectorAll('[data-a="sndtoggle"]').forEach(b=>{b.textContent=SND.on?'Tắt âm thanh':'Bật âm thanh';b.setAttribute('aria-pressed',String(SND.on))});
+ const n=document.getElementById('sndvoice');
+ if(n)n.textContent=('speechSynthesis' in window)?(viVoice()?'Giọng đọc: '+viVoice().name:'Máy chưa có giọng đọc tiếng Việt. Cài thêm trong Windows: Cài đặt → Thời gian & ngôn ngữ → Giọng nói → Thêm giọng → Tiếng Việt.'):'Trình duyệt không hỗ trợ giọng đọc.';
+}
+
 // ===== QUẢNG TRƯỜNG 2.5D (dùng chung cho chế độ trong app và TikTok LIVE) =====
 const PZ={cv:null,x:null,k:1,W:720,H:600,mode:'plaza',G:12,TW:56,TH:28,ox:360,oy:250,bdH:300,city:'hanoi',
  ents:[],byId:{},fx:[],props:[],seats:[],stall:null,sign:null,me:null,t:0,raf:0,last:0,run:false,
@@ -1230,7 +1318,7 @@ function arrive(e){
  const th=e.then;
  if(th==='gone'||th==='board'){removeEnt(e);return}
  if(th==='sit'||th==='sitEat'){e.state=th;e.t=th==='sitEat'?11:6+Math.random()*8;e.face=Math.random()<.5?1:-1;return}
- if(th==='order'){e.state='wait';e.t=1.4;e.face=-1;return}
+ if(th==='order'){e.state='wait';e.t=1.4;e.face=-1;sfx('order');return}
  if(th==='photo'){e.state='photo';e.t=2.4;e.face=-1;flash();return}
  e.state='idle';e.t=e.me||e.peer?9999:2+Math.random()*5;
 }
@@ -1249,11 +1337,11 @@ function expire(e){
  if(r<.55){const p=randFloor();goTo(e,p.x,p.y,'idle')}else if(r<.85)sitDown(e,false);else{e.state='idle';e.t=2+Math.random()*3}
 }
 // --- Hiệu ứng ---
-function flash(){PZ.fx.push({type:'flash',life:.35,max:.35})}
+function flash(){sfx('photo');PZ.fx.push({type:'flash',life:.35,max:.35})}
 function popText(str,x,y,opt={}){PZ.fx.push(Object.assign({type:'text',str,x,y,vx:0,vy:-28,life:2,max:2,size:22,color:'#FFFFFF',stroke:'#1B2622'},opt))}
 function confetti(n=90){const cs=['#E8453C','#F5C542','#2E9E7A','#3D7DD8','#E4729B','#FFFFFF'];for(let i=0;i<n;i++)PZ.fx.push({type:'conf',x:Math.random()*PZ.W,y:-20-Math.random()*200,vx:(Math.random()-.5)*60,vy:80+Math.random()*120,g:30,c:cs[i%cs.length],r:Math.random()*6.28,life:4,max:4})}
 function hearts(n){for(let i=0;i<n;i++)PZ.fx.push({type:'heart',x:PZ.W-70+(Math.random()-.5)*60,y:PZ.H-330,vx:(Math.random()-.5)*40,vy:-90-Math.random()*60,life:2.6,max:2.6,c:['#FF4D6D','#FF8FA3','#FFB3C1'][i%3]})}
-function firework(){for(let b=0;b<3;b++){const cx=120+Math.random()*(PZ.W-240),cy=140+Math.random()*220,c=['#F5C542','#E8453C','#7FD1FF','#9CFF8F'][b%4];for(let i=0;i<36;i++){const a=i/36*6.283,s=110+Math.random()*60;PZ.fx.push({type:'spark',x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:60,c,life:1.6,max:1.6})}}}
+function firework(){sfx('boom');for(let b=0;b<3;b++){const cx=120+Math.random()*(PZ.W-240),cy=140+Math.random()*220,c=['#F5C542','#E8453C','#7FD1FF','#9CFF8F'][b%4];for(let i=0;i<36;i++){const a=i/36*6.283,s=110+Math.random()*60;PZ.fx.push({type:'spark',x:cx,y:cy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,g:60,c,life:1.6,max:1.6})}}}
 // --- Vẽ ---
 function rrect(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath()}
 function diamond(x,cx,cy,hw,hh){x.beginPath();x.moveTo(cx,cy-hh);x.lineTo(cx+hw,cy);x.lineTo(cx,cy+hh);x.lineTo(cx-hw,cy);x.closePath()}
@@ -1406,7 +1494,7 @@ function plazaSay(){
  if(/^(z|dz|d|v)[oô]+!*$/i.test(t.normalize('NFC')))plazaZo();else pushPresence();
 }
 function plazaZo(){
- if(!PZ.me)return;cheer(PZ.me);PZ.me.zoAt=Date.now();if(!PZ.me.bubble)say(PZ.me,'Zô!');
+ if(!PZ.me)return;cheer(PZ.me);sfx('zo');PZ.me.zoAt=Date.now();if(!PZ.me.bubble)say(PZ.me,'Zô!');
  PZ.ents.forEach(e=>{if(e.npc&&Math.random()<.7)setTimeout(()=>{cheer(e);if(Math.random()<.5)say(e,'Zô!')},200+Math.random()*700)});
  const [sx,sy]=iso(PZ.me.x,PZ.me.y);popText('ZÔÔÔ!',sx,sy-90,{size:28,color:'#F5C542',bold:true});pushPresence();
 }
@@ -1464,29 +1552,30 @@ function ensureViewer(uid,name){
   if(vs.length>=110){const old=vs.filter(x=>!x.gift).sort((a,b)=>a.last-b.last)[0];if(old)leaveEnt(old)}
   e=addEnt({id:'v:'+uid,name:String(name||uid).slice(0,16),look:seedLook(uid)});
   if(LIVE.gifts[uid]){e.gift=true;e.look={...e.look,hat:'vang'}}
+  sfx('join');
  }
  e.last=PZ.t;return e;
 }
 function liveFeed(t){LIVE.feed.unshift(t);LIVE.feed=LIVE.feed.slice(0,4)}
 function ttChat(uid,name,text){
  if(PZ.phase!=='play')return;
- const e=ensureViewer(uid,name);text=String(text||'').slice(0,80);say(e,text);const n=norm(text);
+ const e=ensureViewer(uid,name);text=String(text||'').slice(0,80);say(e,text);speak(`${e.name}: ${text}`,'chat');const n=norm(text);
  if(/^(z|dz|d|v|y)o+$/.test(n.replace(/ /g,''))||/\b(zo+|dzo+|vo+)\b/.test(n))return liveZo(e);
  const city=matchCity(n);if(city&&city!==PZ.city)return liveVote(e,uid,city);
  const dish=matchDish(n);if(dish||/\b(an|doi|order|goi mon|an gi)\b/.test(n))return order(e,dish);
  if(/chup|check ?in|selfie/.test(n))return photoEnt(e);
 }
 function liveZo(e){
- cheer(e);const now=PZ.t;LIVE.zo=LIVE.zo.filter(z=>now-z.t<25&&z.id!==e.id);LIVE.zo.push({id:e.id,t:now});
+ cheer(e);sfx('zo');const now=PZ.t;LIVE.zo=LIVE.zo.filter(z=>now-z.t<25&&z.id!==e.id);LIVE.zo.push({id:e.id,t:now});
  if(LIVE.zo.length>=LIVE.zoGoal){
-  LIVE.zo=[];PZ.ents.forEach((x,i)=>setTimeout(()=>{if(PZ.ents.includes(x))cheer(x)},i*25));
+  LIVE.zo=[];sfx('zoBig');speak('Một, hai, ba, zô! Cả quán cùng zô!');PZ.ents.forEach((x,i)=>setTimeout(()=>{if(PZ.ents.includes(x))cheer(x)},i*25));
   popText('ZÔÔÔ! 1 2 3 ZÔ!',PZ.W/2,PZ.oy+90,{size:40,color:'#F5C542',bold:true,life:2.6,max:2.6,vy:-18});confetti(120);
   liveFeed(`Cả quán cùng zô! Mục tiêu tiếp theo: ${Math.min(30,LIVE.zoGoal+2)} người`);LIVE.zoGoal=Math.min(30,LIVE.zoGoal+2);
  }
 }
 function liveVote(e,uid,city){
  for(const k in LIVE.votes)LIVE.votes[k].delete(uid);(LIVE.votes[city]=LIVE.votes[city]||new Set()).add(uid);
- const [sx,sy]=iso(e.x,e.y);popText('+1 '+BY[city].n,sx,sy-80,{size:16,color:'#7FE0B8'});
+ sfx('vote');const [sx,sy]=iso(e.x,e.y);popText('+1 '+BY[city].n,sx,sy-80,{size:16,color:'#7FE0B8'});
 }
 function ttGift(uid,name,gift,dia){
  const e=ensureViewer(uid,name);dia=Math.max(1,+dia||1);
@@ -1495,10 +1584,10 @@ function ttGift(uid,name,gift,dia){
  const dish=BY[PZ.city].F[Math.floor(Math.random()*BY[PZ.city].F.length)][0];
  popText(`${g.name} bao cả quán ${dish}!`,PZ.W/2,PZ.bdH-150,{size:24,color:'#FFFFFF',stroke:'#B3261E',life:3,max:3,vy:-10});
  PZ.ents.slice(0,70).forEach(x=>{if(x.seat){x.state='sitEat';x.t=9;x.dish=dish}else if(x.state!=='walk'){x.state='eatStand';x.t=7}});
- confetti(dia>=30?140:60);if(dia>=99)firework();liveFeed(`${g.name} tặng ${gift||'quà'} · bao cả quán ${dish}`);
+ sfx('gift');speak(`${g.name} bao cả quán ${dish}!`);confetti(dia>=30?140:60);if(dia>=99)firework();liveFeed(`${g.name} tặng ${gift||'quà'} · bao cả quán ${dish}`);
 }
-function ttLike(uid,name,cnt){LIVE.likes+=+cnt||1;hearts(Math.min(8,+cnt||1));if(uid)ensureViewer(uid,name)}
-function ttFollow(uid,name){const e=ensureViewer(uid,name);cheer(e);const [sx,sy]=iso(e.x,e.y);popText('đã follow',sx,sy-80,{size:15,color:'#FF8FA3'});liveFeed(`${e.name} vừa follow kênh`)}
+function ttLike(uid,name,cnt){LIVE.likes+=+cnt||1;sfx('like');hearts(Math.min(8,+cnt||1));if(uid)ensureViewer(uid,name)}
+function ttFollow(uid,name){const e=ensureViewer(uid,name);cheer(e);sfx('follow');speak(`Cảm ơn ${e.name} đã follow kênh`);const [sx,sy]=iso(e.x,e.y);popText('đã follow',sx,sy-80,{size:15,color:'#FF8FA3'});liveFeed(`${e.name} vừa follow kênh`)}
 function handleTT(m){
  const ev=String(m.event||m.type||'').toLowerCase(),d=m.data||m,u=d.user||{};
  const uid=d.uniqueId||u.uniqueId||d.userId||u.userId,name=d.nickname||u.nickname||uid;
@@ -1517,10 +1606,10 @@ function liveConnect(){
  st.textContent='Đang kết nối…';
  try{
   const ws=new WebSocket(url);LIVE.ws=ws;
-  ws.onopen=()=>{LIVE.wsOK=true;st.textContent='Đã kết nối. Bình luận trên LIVE sẽ hiện trong quán.';st.dataset.ok='1'};
+  ws.onopen=()=>{LIVE.wsOK=true;LIVE.gotEv=false;st.textContent='Đã nối với TikFinity trên máy. Đang chờ bình luận đầu tiên từ LIVE… (nếu mãi không có, kiểm tra TikFinity đã kết nối vào phiên LIVE chưa)';st.dataset.ok=''};
   ws.onclose=()=>{LIVE.wsOK=false;st.dataset.ok='';st.textContent='Mất kết nối. Kiểm tra TikFinity đang mở rồi bấm Kết nối lại.'};
   ws.onerror=()=>{st.textContent='Không kết nối được '+url+'. TikFinity đã mở và đang kết nối LIVE chưa?'};
-  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}if(Array.isArray(m))m.forEach(handleTT);else handleTT(m)};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}if(!LIVE.gotEv){LIVE.gotEv=true;st.textContent='Đang nhận sự kiện từ LIVE. Bình luận sẽ hiện trong quán.';st.dataset.ok='1'}if(Array.isArray(m))m.forEach(handleTT);else handleTT(m)};
  }catch(e){st.textContent='Địa chỉ không hợp lệ.'}
 }
 function saveLiveCfg(){try{localStorage.setItem('xvk.live',JSON.stringify(LIVE.cfg))}catch(e){}}
@@ -1549,7 +1638,7 @@ function liveTick(dt){
 }
 function topVotes(){return Object.entries(LIVE.votes).map(([k,s])=>[k,s.size]).filter(v=>v[1]>0).sort((a,b)=>b[1]-a[1])}
 function depart(city){
- if(PZ.phase!=='play')return;LIVE.dest=city;PZ.phase='board';PZ.bus.t=5;
+ if(PZ.phase!=='play')return;LIVE.dest=city;PZ.phase='board';PZ.bus.t=5;sfx('horn');speak(`Lên xe thôi! Cả quán đi ${BY[city].n}`);
  LIVE.boarded=PZ.ents.filter(e=>!e.leaving).map(e=>({id:e.id,name:e.name,look:e.look,gift:e.gift})).slice(0,110);
  popText(`Lên xe thôi! Đi ${BY[city].n}`,PZ.W/2,PZ.oy+20,{size:30,color:'#F5C542',bold:true,life:3,max:3,vy:-8});liveFeed(`Cả xe xuất phát đi ${BY[city].n}`);
 }
@@ -1559,7 +1648,7 @@ function arriveLive(){
 }
 function unload(){
  (LIVE.boarded||[]).forEach((b,i)=>setTimeout(()=>{if(PZ.phase!=='play'||PZ.byId[b.id])return;const e=addEnt({id:b.id,name:b.name,look:b.look,gift:b.gift});say(e,i%5===0?'Tới '+BY[PZ.city].n+' rồi!':'')},i*90));
- popText('Chào mừng tới '+BY[PZ.city].n,PZ.W/2,PZ.oy+30,{size:28,color:'#FFFFFF',bold:true,life:3,max:3,vy:-8});LIVE.dest=null;
+ sfx('arrive');speak('Chào mừng tới '+BY[PZ.city].n);popText('Chào mừng tới '+BY[PZ.city].n,PZ.W/2,PZ.oy+30,{size:28,color:'#FFFFFF',bold:true,life:3,max:3,vy:-8});LIVE.dest=null;
 }
 function drawLiveHUD(x){
  const W=PZ.W,c=BY[PZ.city];
@@ -1605,7 +1694,7 @@ function liveEnter(){
    <section><h3>1. Kết nối TikTok LIVE</h3>
     <div class="field"><label for="lvurl">Địa chỉ TikFinity</label><input id="lvurl" value="${esc(LIVE.cfg.url)}"></div>
     <div class="cta" style="justify-content:flex-start"><button class="btn" data-a="lvconnect">Kết nối</button></div>
-    <p class="note" id="lvstatus">${inClaude?'Đang chạy trong Claude: chỉ dùng được chế độ mô phỏng. Kết nối TikTok cần mở bản GitHub trên máy tính.':'Mở TikFinity, đăng nhập TikTok và bắt đầu LIVE, rồi bấm Kết nối.'}</p></section>
+    <p class="note" id="lvstatus">${inClaude?'Đang chạy trong Claude: chỉ dùng được chế độ mô phỏng. Kết nối TikTok cần mở bản GitHub trên máy tính.':'Mở TikFinity Desktop, kết nối vào phiên LIVE, rồi bấm Kết nối ở đây.'}</p></section>
    <section><h3>2. Thử khi chưa LIVE</h3>
     <div class="cta" style="justify-content:flex-start"><button class="btn sun" data-a="lvdemo" id="lvdemo">${LIVE.demo?'Tắt mô phỏng':'Bật mô phỏng người xem'}</button></div>
     <div class="lvrow"><input id="lvname" placeholder="Tên người xem" value="Mr. Tài" maxlength="16"><input id="lvmsg" placeholder="Bình luận, vd: zô, Huế, bún chả" maxlength="80"><button class="btn out" data-a="lvsend">Gửi</button></div>
@@ -1615,11 +1704,25 @@ function liveEnter(){
     <div class="field"><label for="lvgoal">Mục tiêu zô</label><input id="lvgoal" type="number" min="2" max="50" value="${LIVE.cfg.goal}"></div>
     <div class="field"><label for="lvmins">Phút / chuyến</label><input id="lvmins" type="number" min="1" max="30" value="${LIVE.cfg.mins}"></div></div>
     <div class="lvrow"><button class="btn out" data-a="lvgo">Xuất phát ngay</button><button class="btn out" data-a="lvhide">Ẩn bảng (phím H)</button><a class="btn out" href="#">Về game</a></div></section>
+   <section><h3>4. Âm thanh</h3>
+    <div class="cta" style="justify-content:flex-start"><button class="btn sun" data-a="sndtoggle">Bật âm thanh</button></div>
+    <label class="chk"><input type="checkbox" id="sndmusic" ${SND.cfg.music?'checked':''}> Nhạc nền ngũ cung</label>
+    <label class="chk"><input type="checkbox" id="sndsfx" ${SND.cfg.sfx?'checked':''}> Hiệu ứng (zô, quà, còi xe…)</label>
+    <div class="field"><label for="sndtts">Giọng đọc</label><select id="sndtts"><option value="off">Tắt</option><option value="gift">Chỉ đọc quà và sự kiện</option><option value="all">Đọc cả bình luận</option></select></div>
+    <div class="field"><label for="sndvol">Âm lượng</label><input type="range" id="sndvol" min="0" max="1" step="0.05" value="${SND.cfg.vol}"></div>
+    <p class="note" id="sndvoice"></p>
+    <p class="note">Khi phát LIVE: trong TikTok LIVE Studio bật thu âm thanh hệ thống (âm thanh máy tính) để người xem nghe được.</p></section>
   </aside></div>`;
  LIVE.zoGoal=+LIVE.cfg.goal||5;LIVE.voteSec=(+LIVE.cfg.mins||3)*60;LIVE.voteT=LIVE.voteSec;LIVE.on=true;
  attach(document.getElementById('lvcv'),'live');PZ.ents=[];PZ.byId={};PZ.fx=[];PZ.phase='play';PZ.bus={x:120,st:'park',t:0};PZ.fade=0;PZ.fadeDir=0;
  setCity(LIVE.cfg.start in BY?LIVE.cfg.start:'hanoi');startPZ();
  document.getElementById('lvmsg').addEventListener('keydown',e=>{if(e.key==='Enter')liveSendManual()});
+ document.getElementById('sndtts').value=SND.cfg.tts;
+ document.getElementById('sndmusic').addEventListener('change',e=>sndSet('music',e.target.checked));
+ document.getElementById('sndsfx').addEventListener('change',e=>sndSet('sfx',e.target.checked));
+ document.getElementById('sndtts').addEventListener('change',e=>{sndSet('tts',e.target.value);if(e.target.value!=='off'&&!SND.on)sndStart();speak('Xin chào cả nhà, chào mừng tới quán Xuyên Việt Ký')});
+ document.getElementById('sndvol').addEventListener('input',e=>sndSet('vol',+e.target.value));
+ sndUI();
  document.getElementById('lvcity').addEventListener('change',e=>{LIVE.cfg.start=e.target.value;saveLiveCfg();setCity(e.target.value);LIVE.votes={};LIVE.voteT=LIVE.voteSec});
  document.getElementById('lvgoal').addEventListener('change',e=>{LIVE.cfg.goal=Math.max(2,+e.target.value||5);LIVE.zoGoal=LIVE.cfg.goal;saveLiveCfg()});
  document.getElementById('lvmins').addEventListener('change',e=>{LIVE.cfg.mins=Math.max(1,+e.target.value||3);LIVE.voteSec=LIVE.cfg.mins*60;LIVE.voteT=Math.min(LIVE.voteT,LIVE.voteSec);saveLiveCfg()});
@@ -1672,6 +1775,7 @@ document.addEventListener('click',e=>{
  else if(a==='upload')doUpload(id);
  else if(a==='share')openShare(id);
  else if(a==='vsw')setView(id);
+ else if(a==='sndtoggle'){SND.on?sndStop():sndStart()}
  else if(a==='pzsay')plazaSay();
  else if(a==='pzzo')plazaZo();
  else if(a==='lvconnect')liveConnect();
