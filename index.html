@@ -165,7 +165,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .card h1{font-family:var(--f-display);font-weight:400;font-size:30px;line-height:1.05;margin:0;color:var(--jade)}
 .card .lead{margin:0;color:var(--muted)}
 .field{display:flex;flex-direction:column;gap:6px}
-.field label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.field>label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted)}
 .field input,.field select{font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
 .arch{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media (max-width:440px){.arch{grid-template-columns:1fr}}
@@ -231,6 +231,29 @@ img.ph.ok{opacity:1}
 @keyframes walkin{from{transform:translateX(-150px)}to{transform:translateX(0)}}
 .fadein{animation:fadein .45s ease both}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}}
+.shareprev{background:var(--surface-2);display:grid;place-items:center;min-height:220px;padding:12px}
+.shareprev img{max-height:56vh;width:auto;max-width:100%;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.pcb textarea{font:inherit;font-size:13.5px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical;width:100%}
+.btn.share{background:var(--red)}
+.avatar{background:#DDF2FA!important;border:2px solid var(--line);padding:0;overflow:hidden;cursor:pointer}
+.avatar svg{width:100%;height:100%;display:block}
+.avatar:hover{border-color:var(--jade)}
+.lookwrap{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:460px){.lookwrap{grid-template-columns:1fr}.lookprev{max-width:150px;margin:0 auto}}
+.lookprev{background:#DDF2FA;border-radius:12px;aspect-ratio:3/4;overflow:hidden;width:100%;max-width:100%}
+.lookprev svg{width:100%;height:100%;display:block}
+.lookopts{display:flex;flex-direction:column;gap:9px;min-width:0}
+.lrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lrow>span{width:84px;flex:none;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.chipb{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 11px;font-size:13px}
+.chipb:hover{border-color:var(--muted)}
+.chipb[aria-pressed="true"]{border-color:var(--red);background:var(--red-soft);font-weight:600}
+.sw{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);padding:0}
+.sw[aria-pressed="true"]{outline:3px solid var(--red);outline-offset:2px}
+.profile{display:flex;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.profile .lookprev{width:76px;flex:none}
+.profile b{display:block;font-size:16px}
+.profile span{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -370,10 +393,10 @@ const roadKm=(a,b)=>Math.round(hav(a,b)*1.25);
 const total=()=>C.length+C.reduce((s,c)=>s+c.L.length+c.F.length,0);
 const doneCount=()=>Object.keys(S.visited).length+Object.keys(S.done).length;
 
-function newGame(name,arch,start){
+function newGame(name,arch,start,look){
  const A=ARCH[arch];
  S={name:name||'Lữ khách',arch,money:A.money,maxE:A.maxE,energy:A.maxE,hours:8,city:start,
-    visited:{[start]:1},done:{},quiz:{},work:{},route:[start],log:[],tab:'here',dest:null};
+    visited:{[start]:1},done:{},quiz:{},work:{},route:[start],log:[],tab:'here',dest:null,look:look||defLook(arch)};
  addLog('Bắt đầu hành trình xuyên Việt tại '+BY[start].n+' với '+vnd(A.money)+'.','good');
  save();render();
 }
@@ -445,27 +468,110 @@ function arrive(a,b,m){
 
 // ===== NHÂN VẬT =====
 const SHIRT={phuot:'#C8372D',sinhvien:'#2E6DB4',foodie:'#E08A1E',vanphong:'#1E7A63'};
-function heroSVG(pose=''){
- const sh=SHIRT[S.arch]||'#C8372D';
+const SKIN=[['#F6D7B8','Sáng'],['#F2C9A0','Trung bình'],['#D9A57A','Ngăm'],['#A9744F','Đậm']];
+const HAIRC=[['#1E1A18','Đen'],['#4A2F1E','Nâu đen'],['#8A5A2B','Nâu sáng'],['#9B2D2D','Đỏ nâu']];
+const SHIRTS=[['#C8372D','Đỏ'],['#2E6DB4','Xanh dương'],['#E08A1E','Cam'],['#1E7A63','Xanh ngọc'],['#8E4FB8','Tím'],['#E4729B','Hồng'],['#F2F2F2','Trắng'],['#2B2B2B','Đen']];
+const LOOKOPT={
+ g:[['nam','Nam'],['nu','Nữ']],
+ hair:[['ngan','Ngắn'],['xoan','Xoăn'],['dai','Dài'],['buoc','Buộc đuôi ngựa']],
+ bottom:[['quan','Quần'],['vay','Váy']],
+ hat:[['nonla','Nón lá'],['bh','Mũ bảo hiểm'],['luoitrai','Mũ lưỡi trai'],['none','Không đội']],
+};
+function defLook(arch){return {g:'nam',hair:'ngan',hc:HAIRC[0][0],skin:SKIN[1][0],shirt:SHIRT[arch]||'#C8372D',bottom:'quan',hat:'nonla'}}
+function LK(){return (S&&S.look)||defLook(S&&S.arch)}
+function shade(hex,f){const n=parseInt(hex.slice(1),16),c=[n>>16,(n>>8)&255,n&255].map(v=>Math.max(0,Math.min(255,Math.round(v*f))));return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join('')}
+function hairBack(L){
+ if(L.hair==='dai')return `<path d="M-5.8 -31 Q-8 -22 -6.8 -15.2 L1.4 -15.2 L1.4 -24 Z" fill="${L.hc}"/>`;
+ if(L.hair==='buoc')return `<path d="M-5 -31.5 Q-11.5 -29.5 -10.2 -19.5 Q-8.4 -24.5 -5.4 -26 Z" fill="${L.hc}"/><circle cx="-6.4" cy="-29" r="1.1" fill="#D9452B"/>`;
+ return '';
+}
+function hairFront(L){
+ const hc=L.hc;
+ if(L.hair==='xoan')return `<path d="M-6 -27.5 Q-6.4 -35 0.2 -34.6 Q6.2 -34.4 5.9 -29.4 Q3 -31.6 -1.5 -31 Q-4.4 -30.4 -6 -26 Z" fill="${hc}"/>`+[[-5.8,-29.6],[-5,-32.6],[-2.6,-34.6],[0.6,-35.2],[3.6,-34.4],[5.6,-31.8],[-6.2,-26.6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.1" fill="${hc}"/>`).join('');
+ if(L.hair==='dai'||L.hair==='buoc')return `<path d="M-6.1 -28 Q-6.5 -35 0.2 -34.7 Q6.3 -34.5 6.1 -28.8 Q3.6 -32.2 -0.8 -31.2 Q-3.6 -30.5 -4.6 -27 L-4.6 -${L.hair==='dai'?21.5:25} L-6.3 -${L.hair==='dai'?21.5:25} Z" fill="${hc}"/>`;
+ return `<path d="M-5.9 -27.6 Q-6.4 -35 0.2 -34.6 Q6.2 -34.4 5.9 -29.3 Q4.6 -31.2 2.5 -31.4 Q-1.5 -31.6 -3.6 -29.6 Q-4.9 -28.6 -5.9 -25.8 Z" fill="${hc}"/>`;
+}
+function hatPart(L){
+ if(L.hat==='nonla')return `<path d="M-10.5 -30.5 L0 -39.5 L10.5 -30.5 Q0 -28.6 -10.5 -30.5 Z" fill="#EBD9A6" stroke="#A8915A" stroke-width=".7"/><path d="M-5 -33 L0 -37.5 M5 -33 L0 -37.5" stroke="#CDB57A" stroke-width=".5"/>`;
+ if(L.hat==='bh')return `<path d="M-6.9 -28.2 Q-7.1 -36.2 0 -36.2 Q7.1 -36.2 6.9 -28.2 Z" fill="#F4F4F4" stroke="#8D979F" stroke-width=".55"/><path d="M-1.3 -36.1 Q0 -36.3 1.3 -36.1 L1.4 -28.2 L-1.4 -28.2 Z" fill="${L.shirt==='#F2F2F2'?'#C8372D':L.shirt}"/><path d="M3.4 -30.2 Q7.6 -30.8 8.2 -28.1 L3.8 -28.1 Z" fill="#33414C" opacity=".85"/><path d="M-3.2 -28.2 Q-2.4 -23.4 2.2 -23.1" stroke="#333" stroke-width=".5" fill="none"/>`;
+ if(L.hat==='luoitrai'){const c=L.shirt==='#F2F2F2'?'#2E6DB4':L.shirt;return `<path d="M-6.2 -29.6 Q-6.4 -36.2 0 -36.2 Q6.4 -36.2 6.2 -29.6 Z" fill="${c}"/><path d="M4.4 -30.4 Q9.4 -30.9 11.2 -29.3 L5 -28.9 Z" fill="${shade(c,.72)}"/><circle cx="0" cy="-36.1" r=".8" fill="${shade(c,.72)}"/>`}
+ return '';
+}
+function headParts(L,back=true){
+ const nu=L.g==='nu';
+ return `${back?hairBack(L):''}<circle cx="0" cy="-28.5" r="5.6" fill="${L.skin}"/>
+  <circle cx="2.2" cy="-28.8" r=".85" fill="#2B2B2B"/><path d="M1.1 -30.6 h2.3" stroke="${L.hc}" stroke-width=".6" stroke-linecap="round"/>
+  ${nu?`<path d="M2.8 -29.4 l1 -.7" stroke="#2B2B2B" stroke-width=".45"/><circle cx="3.4" cy="-26.9" r="1.05" fill="#F29B9B" opacity=".7"/>`:''}
+  <path d="M1.2 -26.3 q1.2 .8 2.4 0" stroke="${nu?'#C2414A':'#9A5B3A'}" stroke-width="${nu?.75:.6}" fill="none"/>
+  ${hairFront(L)}${hatPart(L)}`;
+}
+function heroSVG(pose='',L){
+ L=L||LK();const sh=L.shirt,line=sh==='#F2F2F2'?' stroke="#C9CFD3" stroke-width=".5"':'';
  let prop='';
  if(pose.includes('photo'))prop=`<rect x="5" y="-37" width="8" height="5.5" rx="1" fill="#2B2B2B"/><circle cx="9" cy="-34.2" r="1.6" fill="#7FB8E0"/><circle class="flash" cx="9" cy="-34" r="7" fill="#FFF8D0"/>`;
  if(pose.includes('eat'))prop=`<path d="M3 -16 h13 a6.5 5 0 0 1 -13 0 Z" fill="#F4F1E8" stroke="#B5A88A" stroke-width=".6"/><path d="M5 -16.5 q4 -2 9 0" stroke="#D9A441" stroke-width="1.2" fill="none"/><line x1="12" y1="-24" x2="16" y2="-15" stroke="#8A6A3A" stroke-width=".8"/><line x1="14" y1="-24" x2="17" y2="-15" stroke="#8A6A3A" stroke-width=".8"/><path class="steam" d="M7 -19 q-2 -3 0 -6" stroke="#fff" stroke-width="1" fill="none"/><path class="steam" style="animation-delay:.5s" d="M11 -19 q2 -3 0 -6" stroke="#fff" stroke-width="1" fill="none"/>`;
  if(pose.includes('work'))prop=`<rect x="2" y="-22" width="13" height="10" rx="1" fill="#B9874E" stroke="#7A5530" stroke-width=".7"/><line x1="2" y1="-17" x2="15" y2="-17" stroke="#7A5530" stroke-width=".6"/>`;
+ const vay=L.bottom==='vay';
+ const legs=vay
+  ?`<g class="legs"><rect class="lg l1" x="-4" y="-9" width="3" height="9" rx="1.4" fill="${L.skin}"/><rect class="lg l2" x="1" y="-9" width="3" height="9" rx="1.4" fill="${L.skin}"/></g>`
+  :`<g class="legs"><rect class="lg l1" x="-4.6" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/><rect class="lg l2" x="0.8" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/></g>`;
+ const skirt=vay?`<path d="M-5.4 -12.2 L-7.8 -6.2 Q0 -5 7.8 -6.2 L5.4 -12.2 Z" fill="${sh==='#2B2B2B'?'#8E4FB8':'#2F3E5C'}"/>`:'';
  return `<g class="hero-body ${pose}">
   <ellipse cx="0" cy="0" rx="9" ry="2.4" fill="rgba(0,0,0,.22)"/>
-  <g class="legs"><rect class="lg l1" x="-4.6" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/><rect class="lg l2" x="0.8" y="-11.5" width="3.8" height="11.5" rx="1.6" fill="#2B3440"/></g>
+  ${legs}
   <rect x="-9.5" y="-23" width="5.5" height="11" rx="2" fill="#6B4F2E"/>
-  <rect class="arm a1" x="-7.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"/>
-  <rect x="-5.6" y="-23.5" width="11.2" height="13.5" rx="3.6" fill="${sh}"/>
-  <rect x="-5.6" y="-12.5" width="11.2" height="2" fill="rgba(0,0,0,.18)"/>
-  <rect class="arm a2" x="4.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"/>
-  <circle cx="0" cy="-28.5" r="5.6" fill="#F2C9A0"/>
-  <circle cx="2.2" cy="-28.8" r=".85" fill="#2B2B2B"/><path d="M1.2 -26.3 q1.2 .8 2.4 0" stroke="#9A5B3A" stroke-width=".6" fill="none"/>
-  <path d="M-10.5 -30.5 L0 -39.5 L10.5 -30.5 Q0 -28.6 -10.5 -30.5 Z" fill="#EBD9A6" stroke="#A8915A" stroke-width=".7"/>
-  <path d="M-5 -33 L0 -37.5 M5 -33 L0 -37.5" stroke="#CDB57A" stroke-width=".5"/>
+  ${hairBack(L)}
+  <rect class="arm a1" x="-7.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"${line}/>
+  ${skirt}
+  <rect x="-5.6" y="-23.5" width="11.2" height="13.5" rx="3.6" fill="${sh}"${line}/>
+  ${vay?'':'<rect x="-5.6" y="-12.5" width="11.2" height="2" fill="rgba(0,0,0,.18)"/>'}
+  <rect class="arm a2" x="4.6" y="-22" width="3" height="10" rx="1.5" fill="${sh}"${line}/>
+  ${headParts(L,false)}
   ${prop}</g>`;
 }
-function mini(x,y){return `<circle cx="${x}" cy="${y}" r="2.6" fill="#F2C9A0"/><path d="M${x-4.2} ${y-1.2} L${x} ${y-5} L${x+4.2} ${y-1.2} Z" fill="#EBD9A6" stroke="#A8915A" stroke-width=".4"/>`}
+function mini(x,y){return `<g transform="translate(${x},${y}) scale(.46) translate(0,28.5)">${headParts(LK())}</g>`}
+function avatarSVG(L){return `<svg viewBox="-11.5 -41.5 23 23" aria-hidden="true">${headParts(L||LK())}</svg>`}
+
+// --- Bộ tùy chỉnh ---
+let DRAFT=null;
+function lookHTML(){
+ const L=DRAFT,chips=(k)=>LOOKOPT[k].map(([v,n])=>`<button type="button" class="chipb" data-a="look" data-k="${k}" data-v="${v}" aria-pressed="${L[k]===v}">${n}</button>`).join('');
+ const sw=(k,list)=>list.map(([v,n])=>`<button type="button" class="sw" data-a="look" data-k="${k}" data-v="${v}" aria-pressed="${L[k]===v}" aria-label="${n}" title="${n}" style="background:${v}"></button>`).join('');
+ return `<div class="lookwrap">
+  <div class="lookprev"><svg viewBox="-17 -44 34 47" role="img" aria-label="Xem trước nhân vật"><g class="breathe">${heroSVG('wave',L)}</g></svg></div>
+  <div class="lookopts">
+   <div class="lrow"><span>Giới tính</span>${chips('g')}</div>
+   <div class="lrow"><span>Kiểu tóc</span>${chips('hair')}</div>
+   <div class="lrow"><span>Màu tóc</span>${sw('hc',HAIRC)}</div>
+   <div class="lrow"><span>Màu da</span>${sw('skin',SKIN)}</div>
+   <div class="lrow"><span>Màu áo</span>${sw('shirt',SHIRTS)}</div>
+   <div class="lrow"><span>Trang phục</span>${chips('bottom')}</div>
+   <div class="lrow"><span>Mũ</span>${chips('hat')}</div>
+   <div class="lrow"><span></span><button type="button" class="chipb" data-a="lookrand">Ngẫu nhiên</button></div>
+  </div></div>`;
+}
+function refreshLook(focusSel){
+ const box=document.getElementById('lookbox');if(!box)return;box.innerHTML=lookHTML();
+ if(focusSel){const el=box.querySelector(focusSel);if(el)el.focus()}
+}
+function setLook(k,v){
+ DRAFT[k]=v;
+ if(k==='g'){DRAFT.hair=v==='nu'?'dai':'ngan';DRAFT.bottom=v==='nu'?'vay':'quan'}
+ refreshLook(`[data-k="${k}"][data-v="${v}"]`);
+}
+function randLook(){
+ const pick=a=>a[Math.floor(Math.random()*a.length)];
+ DRAFT={g:pick(LOOKOPT.g)[0],hair:pick(LOOKOPT.hair)[0],hc:pick(HAIRC)[0],skin:pick(SKIN)[0],shirt:pick(SHIRTS)[0],bottom:pick(LOOKOPT.bottom)[0],hat:pick(LOOKOPT.hat)[0]};
+ refreshLook('[data-a="lookrand"]');
+}
+function editLook(){
+ DRAFT={...LK()};
+ document.getElementById('modalRoot').innerHTML=`<div class="modal"><div class="card"><h1 style="font-size:24px">Ngoại hình nhân vật</h1>
+  <p class="lead">Ngoại hình hiện trên bản đồ, trong từng khung cảnh và trên bưu thiếp chia sẻ.</p>
+  <div id="lookbox">${lookHTML()}</div>
+  <div class="cta"><button class="btn out" data-a="close">Hủy</button><button class="btn" data-a="savelook">Lưu ngoại hình</button></div></div></div>`;
+}
+
 function vehicleSVG(k,flip){
  const f=flip&&k!=='plane'?' transform="scale(-1,1)"':'';
  if(k==='moto')return `<g class="veh"${f}><g class="bob"><circle cx="-9" cy="-4" r="4.2" fill="#3A3A3A"/><circle cx="-9" cy="-4" r="1.6" fill="#BBB"/><circle cx="10" cy="-4" r="4.2" fill="#3A3A3A"/><circle cx="10" cy="-4" r="1.6" fill="#BBB"/><path d="M-12 -8 Q-4 -13 6 -10 L12 -9 L10 -5 L-9 -5 Z" fill="#2E6DB4"/><line x1="8" y1="-10" x2="11" y2="-16" stroke="#333" stroke-width="1.4"/><g class="riding" transform="translate(-1,-7) scale(.78)">${heroSVG()}</g></g></g>`;
@@ -609,7 +715,7 @@ function renderHUD(){
  const A=ARCH[S.arch],pct=Math.round(doneCount()/total()*100);
  document.getElementById('hud').innerHTML=`
   <div class="brand">Xuyên Việt Ký<small>Nhập vai du lịch</small></div>
-  <div class="who"><div class="avatar" aria-hidden="true">${esc(S.name.trim()[0]||'L').toUpperCase()}</div><div><b>${esc(S.name)}</b><span>${A.n} · đang ở ${BY[S.city].n}</span></div></div>
+  <div class="who"><button class="avatar" data-a="editlook" aria-label="Đổi ngoại hình nhân vật" title="Đổi ngoại hình">${avatarSVG()}</button><div><b>${esc(S.name)}</b><span>${A.n} · đang ở ${BY[S.city].n}</span></div></div>
   <div class="stats">
    <div class="stat"><label>Ví tiền</label><span class="v">${vnd(S.money)}</span></div>
    <div class="stat"><label>Năng lượng ${S.energy}/${S.maxE}</label><div class="bar e"><i style="width:${S.energy/S.maxE*100}%"></i></div></div>
@@ -658,7 +764,8 @@ function goView(){
 function passView(){
  const lm=C.reduce((s,c)=>s+c.L.length,0),fd=C.reduce((s,c)=>s+c.F.length,0);
  const lmD=Object.keys(S.done).filter(k=>k.includes(':L')).length,fdD=Object.keys(S.done).filter(k=>k.includes(':F')).length;
- return `<div class="summary"><div><b>${Object.keys(S.visited).length}/${C.length}</b><span>Điểm đến</span></div><div><b>${lmD}/${lm}</b><span>Check-in</span></div><div><b>${fdD}/${fd}</b><span>Đặc sản</span></div></div>
+ return `<div class="profile"><div class="lookprev"><svg viewBox="-17 -44 34 47" aria-hidden="true">${heroSVG()}</svg></div><div><b>${esc(S.name)}</b><span>${ARCH[S.arch].n} · Ngày ${dayOf(S.hours)} của hành trình</span><button class="btn out" data-a="editlook">Đổi ngoại hình</button></div></div>
+ <div class="summary"><div><b>${Object.keys(S.visited).length}/${C.length}</b><span>Điểm đến</span></div><div><b>${lmD}/${lm}</b><span>Check-in</span></div><div><b>${fdD}/${fd}</b><span>Đặc sản</span></div></div>
  <div class="stamps">${C.map(c=>{const v=S.visited[c.id],n=c.L.filter((_,i)=>S.done[c.id+':L'+i]).length+c.F.filter((_,i)=>S.done[c.id+':F'+i]).length,t=c.L.length+c.F.length;
   return `<div class="stamp${v?' on':''}"><div class="sn">${esc(c.n)}</div><div class="sd">${v?'Ngày '+v:'Chưa đến'}</div><div class="sp">${n}/${t} trải nghiệm</div></div>`}).join('')}</div>
  ${albumView()}
@@ -696,7 +803,7 @@ const WK={
 };
 let PHOTOS={},CAN_UP=false,ASSETS=null,DB=null;
 const wikiCache={};
-try{Object.assign(wikiCache,JSON.parse(localStorage.getItem('xvk.wiki')||'{}'))}catch(e){}
+try{Object.assign(wikiCache,JSON.parse(localStorage.getItem('xvk.wiki2')||'{}'))}catch(e){}
 function candidates(key){const [id,t]=key.split(':'),w=WK[id];if(!w||!t)return[];const i=+t.slice(1);return t[0]==='L'?(w.L[i]||[]):t[0]==='F'?(w.F[i]||[]):[]}
 async function wiki(cand){
  if(cand in wikiCache)return wikiCache[cand];
@@ -705,10 +812,12 @@ async function wiki(cand){
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),6000);
   const r=await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g,'_'))}`,{signal:ctl.signal});
   clearTimeout(tm);
-  if(!r.ok){wikiCache[cand]=null;return null}
-  const d=await r.json(),src=d.thumbnail&&d.thumbnail.source;
+  if(r.status===404){wikiCache[cand]=null;return null}
+  if(!r.ok)return null;
+  const d=await r.json();let src=d.thumbnail&&d.thumbnail.source;
+  if(src&&/map|locator|location|\.svg|flag|logo|coat_of_arms|emblem|seal/i.test(src))src=null; // bỏ bản đồ, cờ, logo
   const v=src?{src:src.replace(/\/\d+px-/,'/500px-'),fallback:src,credit:'Wikipedia · '+d.title,href:d.content_urls&&d.content_urls.desktop&&d.content_urls.desktop.page}:null;
-  wikiCache[cand]=v;try{localStorage.setItem('xvk.wiki',JSON.stringify(wikiCache))}catch(e){}
+  wikiCache[cand]=v;try{localStorage.setItem('xvk.wiki2',JSON.stringify(wikiCache))}catch(e){}
   return v;
  }catch(e){return undefined} // bị chặn mạng: không lưu cache, dùng ảnh minh họa
 }
@@ -727,7 +836,7 @@ function loadInto(el,key){
    const cr=el.id==='pframe'&&document.getElementById('pcredit');
    if(cr)cr.innerHTML=p.href?`Nguồn ảnh: <a href="${esc(p.href)}" target="_blank" rel="noopener">${esc(p.credit)}</a>`:esc(p.credit)};
   img.onerror=()=>{if(p.fallback&&img.src!==p.fallback)img.src=p.fallback};
-  img.src=p.src;
+  img.crossOrigin='anonymous';img.src=p.src;
  });
 }
 (async()=>{try{
@@ -788,7 +897,7 @@ function postcard(key){
    <div class="sticker">${stickerSVG(pose)}</div></div>
   <div class="pcb"><h2>${esc(it[0])}</h2><div class="meta">${meta}</div><div class="credit" id="pcredit"></div>
    <input type="file" accept="image/*" id="upfile" hidden>
-   <div class="cta">${CAN_UP?`<button class="btn out" data-a="upload" data-id="${key}">${PHOTOS[key]?'Đổi ảnh':'Thêm ảnh thật'}</button>`:''}<button class="btn" data-a="close">Tiếp tục hành trình</button></div></div></div></div>`;
+   <div class="cta">${CAN_UP?`<button class="btn out" data-a="upload" data-id="${key}">${PHOTOS[key]?'Đổi ảnh':'Thêm ảnh thật'}</button>`:''}<button class="btn share" data-a="share" data-id="${key}">Chia sẻ bưu thiếp</button><button class="btn" data-a="close">Tiếp tục hành trình</button></div></div></div></div>`;
  loadInto(document.getElementById('pframe'),key);
 }
 
@@ -820,7 +929,7 @@ function stayExt(kind){
 }
 function stayInt(kind){
  const z=['Z','z','Z'].map((t,i)=>`<text class="zzz" style="animation-delay:${i*.45}s" x="${190+i*14}" y="${140-i*16}" font-size="${22-i*4}" font-weight="800" fill="${kind==='inn'?'#3D5A80':'#FCE7A0'}">${t}</text>`).join('');
- const sleeper=(x,y)=>`${O(x,y,13,'#F2C9A0')}${P(`M${x-12} ${y-4} q12 -12 24 0`,'#3A2A1E')}${P(`M${x-2} ${y+2} q3 2 6 0`,'none','stroke="#9A5B3A" stroke-width="1.5"')}${P(`M${x+2} ${y-2} h6`,'none','stroke="#2B2B2B" stroke-width="1.5"')}`;
+ const sleeper=(x,y)=>`${O(x,y,13,LK().skin)}${P(`M${x-12} ${y-4} q12 -12 24 0`,LK().hc)}${P(`M${x-2} ${y+2} q3 2 6 0`,'none','stroke="#9A5B3A" stroke-width="1.5"')}${P(`M${x+2} ${y-2} h6`,'none','stroke="#2B2B2B" stroke-width="1.5"')}`;
  if(kind==='inn')return `<svg class="fadein" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   ${R(0,0,400,220,'#EADCC8')}${R(0,220,400,80,'#9C7B5B')}${R(0,216,400,6,'#7A5A3C')}
   ${R(250,46,110,80,'#1A2747')}${O(330,70,10,'#F3EBC8')}${[[262,110,14,16],[280,100,12,26],[296,106,16,20],[316,96,12,30],[332,108,16,18]].map(([x,y,w,h])=>R(x,y,w,h,'#2F3E62')).join('')}${R(250,46,110,80,'none','stroke="#FFFFFF" stroke-width="6"')}${R(304,46,3,80,'#FFFFFF')}
@@ -864,18 +973,128 @@ function albumView(){
   return `<button data-a="view" data-id="${k}" aria-label="${esc(it[0])}"><div class="th" data-k="${k}">${f?foodIllus(it[0]):illus(id)}<img class="ph" alt="" loading="lazy"></div><span>${esc(it[0])}</span></button>`}).join('')}</div></div>`;
 }
 
+// ===== CHIA SẺ BƯU THIẾP =====
+const SITE='https://cothanhtai.github.io/xuyen-viet-ky/';
+let DL=null,SHARE=null;
+(async()=>{try{if(window.claude&&window.claude.use)DL=await window.claude.use('downloads')}catch(e){}})();
+const siteURL=()=>window.claude&&window.claude.use?SITE:(location.origin+location.pathname);
+function loadImg(src,cors=true){return new Promise((res,rej)=>{const i=new Image();if(cors&&!src.startsWith('blob:'))i.crossOrigin='anonymous';i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+function svgImg(svg,w,h){
+ const s=svg.replace(/^<svg /,`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `);
+ return loadImg(URL.createObjectURL(new Blob([s],{type:'image/svg+xml'})),false);
+}
+function cover(x,img,dx,dy,dw,dh){
+ const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height,s=Math.max(dw/iw,dh/ih),w=iw*s,h=ih*s;
+ x.drawImage(img,dx+(dw-w)/2,dy+(dh-h)/2,w,h);
+}
+function rr(x,X,Y,W,H,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+W,Y,X+W,Y+H,r);x.arcTo(X+W,Y+H,X,Y+H,r);x.arcTo(X,Y+H,X,Y,r);x.arcTo(X,Y,X+W,Y,r);x.closePath()}
+function wrap(x,text,maxW){const words=text.split(' '),lines=[];let l='';for(const w of words){const t=l?l+' '+w:w;if(x.measureText(t).width>maxW&&l){lines.push(l);l=w}else l=t}if(l)lines.push(l);return lines}
+const noAccent=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').replace(/[^A-Za-z0-9]/g,'');
+function itemOf(key){const [id,t]=key.split(':'),c=BY[id],i=+t.slice(1),food=t[0]==='F';return {id,c,food,it:food?c.F[i]:c.L[i]}}
+function caption(key){
+ const {c,food,it}=itemOf(key),n=Object.keys(S.visited).length;
+ return (food?`Vừa thưởng thức ${it[0]} ở ${c.n} 😋`:`Vừa check-in ${it[0]} ở ${c.n} 📸`)+
+  `\nHành trình xuyên Việt của ${S.name}: ${n}/${C.length} điểm đến, ngày thứ ${dayOf(S.hours)}.`+
+  `\nĐi du lịch khắp Việt Nam không tốn tiền, chơi tại: ${siteURL()}`+
+  `\n#XuyenVietKy #DuLichVietNam #${noAccent(c.n)}`;
+}
+async function makeCard(key){
+ const {id,c,food,it}=itemOf(key),W=1080,H=1350,PH=830;
+ try{await Promise.all([document.fonts.load('60px Bungee'),document.fonts.load('600 30px "Be Vietnam Pro"')])}catch(e){}
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+ x.fillStyle='#F8F5E7';x.fillRect(0,0,W,H);
+ // Ảnh
+ let img=null,credit='Ảnh minh họa';
+ const p=await getPhoto(key).catch(()=>null);
+ if(p){try{img=await loadImg(p.src)}catch(e){if(p.fallback){try{img=await loadImg(p.fallback)}catch(e2){}}}if(img)credit='Ảnh: '+p.credit}
+ if(!img)img=await svgImg(food?foodIllus(it[0]):illus(id),food?1200:1600,food?900:760);
+ x.save();x.beginPath();x.rect(0,0,W,PH);x.clip();cover(x,img,0,0,W,PH);x.restore();
+ const g=x.createLinearGradient(0,PH-140,0,PH);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,PH-140,W,140);
+ x.font='500 22px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='rgba(255,255,255,.92)';x.textBaseline='alphabetic';
+ let cr=credit;while(x.measureText(cr).width>W-360&&cr.length>10)cr=cr.slice(0,-2);if(cr!==credit)cr+='…';x.fillText(cr,40,PH-26);
+ // Nhãn
+ const tag=food?'ĐẶC SẢN':'CHECK-IN';x.font='800 30px "Be Vietnam Pro",system-ui,sans-serif';
+ const tw=x.measureText(tag).width+48;rr(x,40,40,tw,58,8);x.fillStyle=food?'#D99A12':'#C8372D';x.fill();
+ x.fillStyle=food?'#1B1606':'#FFFFFF';x.fillText(tag,64,80);
+ // Nhân vật selfie
+ const sx=W-175,sy=PH-10,sr=128;
+ x.save();x.beginPath();x.arc(sx,sy,sr,0,Math.PI*2);x.fillStyle='#DDF2FA';x.fill();x.clip();
+ const hero=await svgImg(`<svg viewBox="-17 -44 34 47">${heroSVG(food?'eat':'photo raise')}</svg>`,260,360);
+ x.drawImage(hero,sx-120,sy-180,240,332);x.restore();
+ x.beginPath();x.arc(sx,sy,sr,0,Math.PI*2);x.lineWidth=12;x.strokeStyle='#FFFFFF';x.stroke();
+ // Tiêu đề
+ let fs=72,lines;x.fillStyle='#1B2622';
+ do{x.font=`${fs}px Bungee,"Be Vietnam Pro",system-ui,sans-serif`;lines=wrap(x,it[0].toUpperCase(),W-400);fs-=4}while(lines.length>2&&fs>40);
+ let y=PH+40+fs;lines.slice(0,2).forEach(l=>{x.fillText(l,56,y);y+=fs+14});
+ x.font='600 32px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#1E6B58';x.fillText((c.n+' · '+c.p).toUpperCase(),56,y+8);
+ x.font='400 30px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#5A6A63';
+ x.fillText(`${S.name} · ${ARCH[S.arch].n} · ${Object.keys(S.visited).length}/${C.length} điểm đến`,56,y+58);
+ // Dấu bưu điện
+ const day=S.done[key]||dayOf(S.hours);
+ x.save();x.translate(W-150,H-250);x.rotate(-0.22);x.strokeStyle='rgba(200,55,45,.85)';x.fillStyle='rgba(200,55,45,.85)';
+ x.lineWidth=5;x.beginPath();x.arc(0,0,92,0,Math.PI*2);x.stroke();x.lineWidth=2.5;x.beginPath();x.arc(0,0,78,0,Math.PI*2);x.stroke();
+ x.textAlign='center';x.font='800 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillText('XUYÊN VIỆT KÝ',0,-34);
+ let cf=34;x.font=`${cf}px Bungee,system-ui,sans-serif`;while(x.measureText(c.n.toUpperCase()).width>140&&cf>18){cf-=2;x.font=`${cf}px Bungee,system-ui,sans-serif`}
+ x.fillText(c.n.toUpperCase(),0,12);x.font='800 22px "Be Vietnam Pro",system-ui,sans-serif';x.fillText('NGÀY '+day,0,48);x.restore();x.textAlign='left';
+ // Chân trang
+ x.fillStyle='#1E6B58';x.fillRect(0,H-112,W,112);
+ x.fillStyle='#FFFFFF';x.font='44px Bungee,system-ui,sans-serif';x.fillText('XUYÊN VIỆT KÝ',56,H-50);
+ x.font='500 26px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#D3E7DF';x.textAlign='right';
+ x.fillText('Du lịch xuyên Việt không tốn tiền',W-56,H-66);x.font='600 24px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#FFFFFF';
+ x.fillText(siteURL().replace(/^https?:\/\//,'').replace(/\/$/,''),W-56,H-32);x.textAlign='left';
+ return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error('blob')),'image/png'));
+}
+async function openShare(key){
+ const root=document.getElementById('modalRoot');
+ root.innerHTML=`<div class="modal"><div class="pc fadein" role="dialog" aria-label="Chia sẻ bưu thiếp"><div class="shareprev"><div class="note">Đang tạo bưu thiếp…</div></div></div></div>`;
+ let blob;
+ try{blob=await makeCard(key)}catch(e){root.innerHTML='';return toast('Không tạo được ảnh. Thử lại sau.')}
+ if(SHARE&&SHARE.url)URL.revokeObjectURL(SHARE.url);
+ const file=new File([blob],`xuyen-viet-ky-${key.replace(':','-').toLowerCase()}.png`,{type:'image/png'});
+ SHARE={key,blob,file,url:URL.createObjectURL(blob),cap:caption(key)};
+ const canNative=!DL&&navigator.canShare&&navigator.canShare({files:[file]});
+ root.innerHTML=`<div class="modal" data-a="closebg"><div class="pc fadein" role="dialog" aria-label="Chia sẻ bưu thiếp">
+  <div class="shareprev"><img src="${SHARE.url}" alt="Bưu thiếp ${esc(itemOf(key).it[0])}"></div>
+  <div class="pcb"><div class="field"><label for="capbox">Lời chú thích</label><textarea id="capbox" rows="4" readonly>${esc(SHARE.cap)}</textarea></div>
+   <div class="note">${canNative?'Chọn Facebook, Zalo, TikTok… trong bảng chia sẻ. Lời chú thích được copy sẵn, chỉ cần dán vào bài đăng.':'Tải ảnh về máy rồi đăng lên Facebook, TikTok, Zalo. Lời chú thích được copy sẵn khi bấm nút.'}</div>
+   <div class="cta"><button class="btn out" data-a="view" data-id="${key}">Quay lại</button><button class="btn out" data-a="copycap">Copy chú thích</button><button class="btn" data-a="doshare">${canNative?'Chia sẻ ảnh':'Tải ảnh về máy'}</button></div></div></div></div>`;
+}
+function copyCap(silent){
+ if(!SHARE)return;const box=document.getElementById('capbox');
+ const done=()=>{if(!silent)toast('Đã copy lời chú thích.')};
+ try{navigator.clipboard.writeText(SHARE.cap).then(done,()=>{if(box){box.select();try{document.execCommand('copy')}catch(e){}}done()})}
+ catch(e){if(box){box.select();try{document.execCommand('copy')}catch(e2){}}done()}
+}
+async function doShare(){
+ if(!SHARE)return;copyCap(true);
+ const {file,blob,cap}=SHARE;
+ if(DL){
+  try{await DL.save({filename:file.name,data:blob});toast('Đã lưu ảnh. Lời chú thích đã được copy.')}
+  catch(e){toast(e&&e.code==='declined'?'Đã hủy lưu ảnh.':'Không lưu được ảnh ở đây.')}
+  return;
+ }
+ if(navigator.canShare&&navigator.canShare({files:[file]})){
+  try{await navigator.share({files:[file],title:'Xuyên Việt Ký',text:cap});addLog('Chia sẻ bưu thiếp '+itemOf(SHARE.key).it[0]+'.','good');save();return}
+  catch(e){if(e&&e.name==='AbortError')return}
+ }
+ const a=document.createElement('a');a.href=SHARE.url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+ toast('Đã tải ảnh về máy. Lời chú thích đã được copy.');
+}
+
 // ===== MODAL =====
 function setupModal(){
+ DRAFT=defLook('phuot');
  document.getElementById('modalRoot').innerHTML=`<div class="modal"><form class="card" id="setup">
   <h1>Xuyên Việt Ký</h1>
   <p class="lead">Nhập vai một lữ khách với ngân sách ít ỏi. Đi khắp ${C.length} điểm đến từ Hà Giang đến Phú Quốc, check-in, ăn đặc sản, làm thêm kiếm lộ phí và sưu tầm dấu hộ chiếu.</p>
   <div class="field"><label for="pname">Tên nhân vật</label><input id="pname" maxlength="24" value="Lữ khách"></div>
   <div class="field"><label>Chọn vai</label><div class="arch">${Object.entries(ARCH).map(([k,a],i)=>`<label><input type="radio" name="arch" id="arch-${k}" value="${k}" ${i===0?'checked':''}><b>${a.n}</b><span>${a.d}</span></label>`).join('')}</div></div>
+  <div class="field"><label>Ngoại hình</label><div id="lookbox">${lookHTML()}</div></div>
   <div class="field"><label for="pstart">Xuất phát từ</label><select id="pstart"><option value="hanoi">Hà Nội</option><option value="hcm">TP.HCM</option></select></div>
   <div class="cta"><button class="btn big" type="submit">Lên đường</button></div></form></div>`;
  document.getElementById('setup').addEventListener('submit',e=>{e.preventDefault();
   const arch=document.querySelector('input[name=arch]:checked').value;
-  newGame(document.getElementById('pname').value.trim(),arch,document.getElementById('pstart').value);
+  newGame(document.getElementById('pname').value.trim(),arch,document.getElementById('pstart').value,{...DRAFT});
   document.getElementById('modalRoot').innerHTML='';});
 }
 function resetModal(){
@@ -899,12 +1118,20 @@ document.addEventListener('click',e=>{
  else if(a==='closebg'){if(e.target===b)document.getElementById('modalRoot').innerHTML=''}
  else if(a==='view')postcard(id);
  else if(a==='upload')doUpload(id);
+ else if(a==='share')openShare(id);
+ else if(a==='look')setLook(b.dataset.k,b.dataset.v);
+ else if(a==='lookrand')randLook();
+ else if(a==='editlook')editLook();
+ else if(a==='savelook'){S.look={...DRAFT};addLog('Đổi ngoại hình nhân vật.');save();document.getElementById('modalRoot').innerHTML='';render();toast('Đã lưu ngoại hình mới.')}
+ else if(a==='doshare')doShare();
+ else if(a==='copycap')copyCap();
  else if(a==='confirmReset'){try{localStorage.removeItem(KEY)}catch(e){}document.getElementById('modalRoot').innerHTML='';setupModal()}
 });
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('g[data-a]')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 
 // ===== KHỞI ĐỘNG =====
 S=load();
+if(S&&!S.look)S.look=defLook(S.arch);
 if(S){render()}else{
  // Màn hình mẫu phía sau form tạo nhân vật
  S={name:'Lữ khách',arch:'phuot',money:2000000,maxE:100,energy:100,hours:8,city:'hanoi',visited:{hanoi:1},done:{},quiz:{},work:{},route:['hanoi'],log:[],tab:'here',dest:null};

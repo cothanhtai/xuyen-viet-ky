@@ -1,5 +1,5 @@
 // Xuyên Việt Ký - service worker
-const VERSION = 'xvk-v1';
+const VERSION = 'xvk-v3';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -7,7 +7,7 @@ self.addEventListener('install', e => {
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== 'xvk-img').map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== 'xvk-img2').map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
@@ -23,8 +23,8 @@ self.addEventListener('fetch', e => {
   }
   // Ảnh Wikipedia + font: lưu lại để lần sau mở nhanh, chơi offline vẫn thấy ảnh
   if (/wikimedia\.org|wikipedia\.org|fonts\.(googleapis|gstatic)\.com/.test(url.hostname)) {
-    e.respondWith(caches.open('xvk-img').then(c => c.match(req).then(hit => hit || fetch(req).then(r => {
-      if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r;
+    e.respondWith(caches.open('xvk-img2').then(c => c.match(req).then(hit => hit || fetch(req).then(r => {
+      if (r.ok) c.put(req, r.clone()); return r;
     }))));
   }
 });
