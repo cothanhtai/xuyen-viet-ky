@@ -283,6 +283,30 @@ a.btn{text-decoration:none;display:inline-block}
 .lvctl .field input[type=range]{padding:0;accent-color:var(--jade)}
 @media (max-width:520px){.pzbar{flex-wrap:wrap}.pzbar input{flex-basis:100%}}
 @media (max-width:860px){.lv{flex-direction:column;height:auto}#lvcv{width:100%;height:auto}.lvctl{width:auto}}
+/* Quản lý ảnh nền */
+.card.bgmgr,.card.bgedit{max-width:760px;max-height:calc(100vh - 32px);overflow:auto}
+.bghead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bghead h1{font-size:24px}
+.bglist{display:flex;flex-direction:column;gap:6px}
+.bglist h3{margin:10px 0 2px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.bgrow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px}
+.bgthumb{width:96px;aspect-ratio:1.44;border-radius:6px;overflow:hidden;background:var(--surface-2);max-width:100%}
+.bgthumb img,.bgthumb svg{width:100%;height:100%;object-fit:cover;display:block}
+.bgname b{display:block;font-size:14.5px}
+.bgname span{font-size:12px;color:var(--muted)}
+.bgname span.ok{color:var(--jade);font-weight:700}
+.bgact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.bgact .btn{padding:6px 10px;font-size:13px}
+.btn.danger{background:var(--red)}
+.bgfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;border-top:1px solid var(--line);padding-top:12px}
+.bgfoot .note{flex:1;min-width:200px}
+.bgstage{background:#1E2B27;border-radius:10px;overflow:hidden}
+#bgcv{display:block;width:100%;height:auto;cursor:grab;touch-action:none}
+#bgcv:active{cursor:grabbing}
+.bgctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.bgctl label[for=bgzoom]{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bgctl input[type=range]{flex:1;min-width:160px;accent-color:var(--jade)}
+@media (max-width:560px){.bgrow{grid-template-columns:72px minmax(0,1fr)}.bgthumb{width:72px}.bgact{grid-column:1 / -1;justify-content:flex-start}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1290,9 +1314,12 @@ function sprite(L,f){
   im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-18 -46 36 48" width="72" height="96">${frameSVG(L,f)}</svg>`)}
  return e.img;
 }
+// Ảnh nền: dùng ảnh riêng bg/<mã-địa-điểm>.jpg nếu có (bản GitHub), không có thì dùng hình vẽ sẵn
 function backdrop(cid){
- let e=BD[cid];if(!e){e=BD[cid]={img:null};const im=new Image();im.onload=()=>{e.img=im};
-  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(illus(cid).replace(/^<svg /,'<svg xmlns="http://www.w3.org/2000/svg" width="800" height="380" '))}
+ let e=BD[cid];if(!e){e=BD[cid]={img:null,photo:false};const im=new Image();im.onload=()=>{if(!e.photo)e.img=im};
+  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(illus(cid).replace(/^<svg /,'<svg xmlns="http://www.w3.org/2000/svg" width="800" height="380" '));
+  if(typeof CUSTOM_BG!=='undefined'&&CUSTOM_BG[cid]){const cu=new Image();cu.onload=()=>{e.img=cu;e.photo=true};cu.src=CUSTOM_BG[cid]}
+  else if(!(window.claude&&window.claude.use)){const ph=new Image();ph.onload=()=>{e.img=ph;e.photo=true};ph.src='bg/'+cid+'.jpg'}}
  return e.img;
 }
 // --- Hệ tọa độ nhìn chéo ---
@@ -1864,7 +1891,10 @@ function liveEnter(){
     <div class="field"><label for="sndvol">Âm lượng</label><input type="range" id="sndvol" min="0" max="1" step="0.05" value="${SND.cfg.vol}"></div>
     <p class="note" id="sndvoice"></p>
     <p class="note">Khi phát LIVE: trong TikTok LIVE Studio bật thu âm thanh hệ thống (âm thanh máy tính) để người xem nghe được.</p></section>
-  </aside></div>`;
+   <section><h3>5. Ảnh nền địa điểm</h3>
+    <p class="note">Tự tải ảnh cho từng địa danh, kéo và phóng to cho vừa khung. Ảnh lưu trên máy này.</p>
+    <div class="cta" style="justify-content:flex-start"><button class="btn" data-a="bgmgr">Quản lý ảnh nền</button></div></section>
+  </aside></div><div id="lvmodal"></div>`;
  LIVE.zoGoal=+LIVE.cfg.goal||5;LIVE.voteSec=(+LIVE.cfg.mins||3)*60;LIVE.voteT=LIVE.voteSec;LIVE.on=true;
  attach(document.getElementById('lvcv'),'live');PZ.ents=[];PZ.byId={};PZ.fx=[];PZ.phase='play';PZ.bus={x:120,st:'park',t:0};PZ.fade=0;PZ.fadeDir=0;
  setCity(LIVE.cfg.start in BY?LIVE.cfg.start:'hanoi');startPZ();
@@ -1877,7 +1907,7 @@ function liveEnter(){
  sndUI();
  const tsel=document.getElementById('lvtour');tsel.value=TOURS[LIVE.cfg.tour]?LIVE.cfg.tour:'off';
  tsel.addEventListener('change',e=>{LIVE.cfg.tour=e.target.value;saveLiveCfg();const t=TOURS[e.target.value];
-  if(t&&!t.stops.includes(PZ.city)){const first=t.stops[0];LIVE.cfg.start=first;setCity(first);document.getElementById('lvcity').value=first}
+  if(t&&!t.stops.includes(PZ.city)){const first=t.stops[0];LIVE.cfg.start=first;saveLiveCfg();setCity(first);document.getElementById('lvcity').value=first}
   LIVE.votes={};LIVE.voteT=LIVE.voteSec;tourReset();toast(t?'Đã bật '+t.n+'. Đủ '+LIVE.cfg.leaveN+' người gõ cùng một tỉnh thì xe rời thành phố; đi hết '+t.stops.length+' địa danh sẽ mở vòng chọn tỉnh.':'Đã chuyển về hành trình xuyên Việt 16 tỉnh.')});
  document.getElementById('lvcity').addEventListener('change',e=>{LIVE.cfg.start=e.target.value;saveLiveCfg();setCity(e.target.value);LIVE.votes={};LIVE.voteT=LIVE.voteSec;
   const t=TOURS[LIVE.cfg.tour];if(t&&!t.stops.includes(e.target.value)){LIVE.cfg.tour='off';saveLiveCfg();tsel.value='off'}tourReset()});
@@ -1894,6 +1924,113 @@ function liveSendManual(){const n=document.getElementById('lvname').value.trim()
 function route(){if(location.hash==='#live')liveEnter();else if(document.body.classList.contains('is-live'))liveExit()}
 addEventListener('hashchange',route);
 addEventListener('keydown',e=>{if(LIVE.on&&(e.key==='h'||e.key==='H')&&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)){const c=document.getElementById('lvctl');if(c)c.hidden=!c.hidden}});
+
+// ===== ẢNH NỀN RIÊNG CHO TỪNG ĐỊA ĐIỂM (lưu trong trình duyệt của máy chủ LIVE) =====
+const IDB={p:null,
+ open(){return this.p||(this.p=new Promise((res,rej)=>{try{const r=indexedDB.open('xvk',1);r.onupgradeneeded=()=>r.result.createObjectStore('bg');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}}))},
+ async req(mode,fn){const d=await this.open();return new Promise((res,rej)=>{const s=d.transaction('bg',mode).objectStore('bg'),q=fn(s);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+ get(k){return this.req('readonly',s=>s.get(k))},set(k,v){return this.req('readwrite',s=>s.put(v,k))},del(k){return this.req('readwrite',s=>s.delete(k))},keys(){return this.req('readonly',s=>s.getAllKeys())}};
+const CUSTOM_BG={};
+async function loadCustomBgs(){try{for(const k of await IDB.keys()){const b=await IDB.get(k);if(b){CUSTOM_BG[k]=URL.createObjectURL(b);delete BD[k]}}}catch(e){}}
+loadCustomBgs();
+const BG_W=1440,BG_H=1000;
+function allSpots(){return [{g:'Xuyên Việt · 16 tỉnh',ids:C.map(c=>c.id)},...Object.values(TOURS).map(t=>({g:t.n,ids:t.stops}))]}
+function drawGuides(x){
+ const box=(X,Y,w,h,l)=>{x.fillStyle='rgba(200,40,40,.38)';x.fillRect(X,Y,w,h);x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(X,Y,w,h);x.fillStyle='#fff';x.font='bold 24px sans-serif';x.textAlign='left';x.fillText(l,X+12,Y+32)};
+ box(200,52,1040,104,'Banner "zô" (bị che)');box(40,184,600,316,'Ô tên địa điểm (bị che)');box(980,184,420,128,'Đồng hồ xe (bị che)');
+ const g=x.createLinearGradient(0,550,0,1000);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');x.fillStyle=g;x.fillRect(0,550,BG_W,450);
+ x.fillStyle='rgba(200,71,58,.55)';x.beginPath();x.moveTo(420,1000);x.lineTo(720,850);x.lineTo(1020,1000);x.closePath();x.fill();
+ x.setLineDash([18,12]);x.strokeStyle='#3CFF8F';x.lineWidth=6;x.strokeRect(300,160,840,440);x.setLineDash([]);
+ x.strokeStyle='#FFD54A';x.lineWidth=4;x.beginPath();x.moveTo(0,600);x.lineTo(BG_W,600);x.stroke();
+ x.fillStyle='rgba(15,20,18,.8)';x.fillRect(300,604,840,38);x.fillStyle='#3CFF8F';x.font='bold 24px sans-serif';x.textAlign='center';x.fillText('Đặt địa danh trong khung xanh',720,632);
+ x.fillStyle='rgba(15,20,18,.8)';x.fillRect(470,880,500,40);x.fillStyle='#fff';x.fillText('Sàn quán che phần dưới',720,909);x.textAlign='left';
+}
+// --- Danh sách địa điểm ---
+const BGM={confirm:null};
+function bgModal(html){const m=document.getElementById('lvmodal')||document.getElementById('modalRoot');m.innerHTML=html;return m}
+function bgClose(){const m=document.getElementById('lvmodal');if(m)m.innerHTML='';BGE.img=null}
+function bgManager(){
+ const n=Object.keys(CUSTOM_BG).length,total=allSpots().reduce((s,g)=>s+g.ids.length,0);
+ bgModal(`<div class="modal"><div class="card bgmgr">
+  <div class="bghead"><h1>Ảnh nền địa điểm</h1><button class="btn out" data-a="bgclose">Đóng</button></div>
+  <p class="lead">Đã có ảnh riêng: <b>${n}/${total}</b> địa điểm. Ảnh được lưu trong trình duyệt của máy này, dùng ngay khi LIVE. Nơi chưa có ảnh sẽ dùng hình vẽ sẵn.</p>
+  <div class="bglist">${allSpots().map(g=>`<h3>${esc(g.g)}</h3>`+g.ids.map(id=>{const c=SP(id),has=!!CUSTOM_BG[id];
+   const thumb=has?`<img src="${CUSTOM_BG[id]}" alt="">`:illus(id);
+   const act=BGM.confirm===id?`<button class="btn out" data-a="bgcancel">Giữ lại</button><button class="btn danger" data-a="bgdelok" data-id="${id}">Xóa ảnh</button>`
+    :`<button class="btn out" data-a="bggo" data-id="${id}" title="Chuyển quán tới đây để xem">Xem</button>${has?`<button class="btn out" data-a="bgdel" data-id="${id}">Xóa</button>`:''}<button class="btn" data-a="bgup" data-id="${id}">${has?'Đổi ảnh':'Tải ảnh lên'}</button>`;
+   return `<div class="bgrow"><div class="bgthumb">${thumb}</div><div class="bgname"><b>${esc(c.n)}</b><span class="${has?'ok':''}">${has?'Ảnh riêng':'Hình vẽ sẵn'}</span></div><div class="bgact">${act}</div></div>`}).join('')).join('')}</div>
+  <div class="bgfoot"><span class="note">Đổi máy hoặc xóa dữ liệu trình duyệt sẽ mất ảnh. Nên sao lưu sau khi thêm ảnh.</span>
+   <button class="btn out" data-a="bgexport" ${n?'':'disabled'}>Sao lưu bộ ảnh</button><button class="btn out" data-a="bgimport">Khôi phục</button></div>
+  <input type="file" id="bgfile" accept="image/jpeg,image/png,image/webp" hidden><input type="file" id="bgjson" accept=".json,application/json" hidden>
+ </div></div>`);
+}
+function bgPickFile(id){
+ const inp=document.getElementById('bgfile');if(!inp)return;inp.value='';
+ inp.onchange=()=>{const f=inp.files[0];if(!f)return;
+  if(!/^image\//.test(f.type))return toast('Chỉ nhận ảnh JPG, PNG hoặc WebP.');
+  const url=URL.createObjectURL(f),im=new Image();
+  im.onload=()=>bgEditor(id,im,url);im.onerror=()=>{URL.revokeObjectURL(url);toast('Không đọc được ảnh này. Ảnh HEIC của iPhone hãy đổi sang JPG trước.')};im.src=url};
+ inp.click();
+}
+// --- Trình căn chỉnh ảnh ---
+const BGE={id:null,img:null,url:null,z:1,x:0,y:0,s0:1,guides:true,drag:null};
+function bgEditor(id,img,url){
+ Object.assign(BGE,{id,img,url,z:1,guides:true});BGE.s0=Math.max(BG_W/img.width,BG_H/img.height);
+ const dw=img.width*BGE.s0,dh=img.height*BGE.s0;BGE.x=(BG_W-dw)/2;BGE.y=(BG_H-dh)/2;
+ bgModal(`<div class="modal"><div class="card bgedit">
+  <div class="bghead"><h1>${esc(SP(id).n)}</h1><span class="note">Khung 1440 × 1000</span></div>
+  <div class="bgstage"><canvas id="bgcv" width="${BG_W}" height="${BG_H}" aria-label="Kéo để căn ảnh"></canvas></div>
+  <div class="bgctl"><label for="bgzoom">Phóng to</label><input type="range" id="bgzoom" min="1" max="3" step="0.01" value="1">
+   <label class="chk"><input type="checkbox" id="bgguide" checked> Hiện vùng bị che</label></div>
+  <p class="note">Kéo ảnh để căn. Đặt địa danh trong <b>khung xanh</b>; phần trên cùng nên là bầu trời, phần dưới là mặt đất.</p>
+  <div class="cta"><button class="btn out" data-a="bgback">Quay lại</button><button class="btn out" data-a="bgup" data-id="${id}">Chọn ảnh khác</button><button class="btn" data-a="bgsave">Lưu ảnh nền</button></div>
+  <input type="file" id="bgfile" accept="image/jpeg,image/png,image/webp" hidden>
+ </div></div>`);
+ const cv=document.getElementById('bgcv');
+ cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);BGE.drag={px:e.clientX,py:e.clientY,x:BGE.x,y:BGE.y}});
+ cv.addEventListener('pointermove',e=>{if(!BGE.drag)return;const k=BG_W/cv.getBoundingClientRect().width;BGE.x=BGE.drag.x+(e.clientX-BGE.drag.px)*k;BGE.y=BGE.drag.y+(e.clientY-BGE.drag.py)*k;bgDraw()});
+ cv.addEventListener('pointerup',()=>{BGE.drag=null});cv.addEventListener('pointercancel',()=>{BGE.drag=null});
+ document.getElementById('bgzoom').addEventListener('input',e=>{const oz=BGE.z,nz=+e.target.value,cx=BG_W/2,cy=BG_H/2;
+  BGE.x=cx-(cx-BGE.x)*nz/oz;BGE.y=cy-(cy-BGE.y)*nz/oz;BGE.z=nz;bgDraw()});
+ document.getElementById('bgguide').addEventListener('change',e=>{BGE.guides=e.target.checked;bgDraw()});
+ bgDraw();
+}
+function bgClamp(){const dw=BGE.img.width*BGE.s0*BGE.z,dh=BGE.img.height*BGE.s0*BGE.z;BGE.x=Math.min(0,Math.max(BG_W-dw,BGE.x));BGE.y=Math.min(0,Math.max(BG_H-dh,BGE.y));return [dw,dh]}
+function bgRender(x,guides){const [dw,dh]=bgClamp();x.fillStyle='#1E2B27';x.fillRect(0,0,BG_W,BG_H);x.drawImage(BGE.img,BGE.x,BGE.y,dw,dh);if(guides)drawGuides(x)}
+function bgDraw(){const cv=document.getElementById('bgcv');if(cv&&BGE.img)bgRender(cv.getContext('2d'),BGE.guides)}
+async function bgSave(){
+ if(!BGE.img)return;const cv=document.createElement('canvas');cv.width=BG_W;cv.height=BG_H;bgRender(cv.getContext('2d'),false);
+ let q=.86,blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',q));
+ while(blob&&blob.size>450000&&q>.5){q-=.08;blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',q))}
+ if(!blob)return toast('Không lưu được ảnh.');
+ try{await IDB.set(BGE.id,blob);try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}
+ catch(e){return toast('Trình duyệt không cho lưu ảnh (có thể đang ở chế độ ẩn danh).')}
+ if(CUSTOM_BG[BGE.id])URL.revokeObjectURL(CUSTOM_BG[BGE.id]);CUSTOM_BG[BGE.id]=URL.createObjectURL(blob);delete BD[BGE.id];
+ if(BGE.url)URL.revokeObjectURL(BGE.url);const name=SP(BGE.id).n;BGE.img=null;
+ toast(`Đã lưu ảnh nền ${name} (${Math.round(blob.size/1024)} KB).`);bgManager();
+}
+async function bgDelete(id){try{await IDB.del(id)}catch(e){}if(CUSTOM_BG[id])URL.revokeObjectURL(CUSTOM_BG[id]);delete CUSTOM_BG[id];delete BD[id];BGM.confirm=null;toast('Đã xóa ảnh nền, quay về hình vẽ sẵn.');bgManager()}
+function bgGo(id){
+ if(LIVE.on){if(PZ.phase!=='play')return toast('Xe đang chạy, đợi tới nơi rồi thử lại.');setCity(id);LIVE.votes={};LIVE.voteT=LIVE.voteSec;
+  const t=TOURS[LIVE.cfg.tour];if(t&&!t.stops.includes(id)){LIVE.cfg.tour='off';saveLiveCfg();const ts=document.getElementById('lvtour');if(ts)ts.value='off'}
+  const sel=document.getElementById('lvcity');if(sel)sel.value=id;tourReset();bgClose();toast('Quán đã chuyển tới '+SP(id).n)}
+}
+async function bgExport(){
+ const out={app:'xuyen-viet-ky',kind:'anh-nen',v:1,items:{}};
+ for(const id of Object.keys(CUSTOM_BG)){try{const b=await IDB.get(id);out.items[id]=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)})}catch(e){}}
+ const blob=new Blob([JSON.stringify(out)],{type:'application/json'}),name='xuyen-viet-ky-anh-nen.json';
+ if(DL){try{await DL.save({filename:name,data:blob});toast('Đã lưu file sao lưu.')}catch(e){toast(e&&e.code==='declined'?'Đã hủy.':'Không lưu được file ở đây.')}return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Đã tải file sao lưu về máy.');
+}
+function bgImport(){
+ const inp=document.getElementById('bgjson');if(!inp)return;inp.value='';
+ inp.onchange=async()=>{const f=inp.files[0];if(!f)return;let d;try{d=JSON.parse(await f.text())}catch(e){return toast('File sao lưu không hợp lệ.')}
+  if(!d||d.kind!=='anh-nen'||!d.items)return toast('Đây không phải file sao lưu ảnh nền của Xuyên Việt Ký.');
+  let n=0;for(const [id,du] of Object.entries(d.items)){if(!SPOTS[id]&&!BY[id])continue;if(typeof du!=='string'||!du.startsWith('data:image/'))continue;
+   try{const m=/^data:([^;]+);base64,(.*)$/.exec(du);if(!m)continue;const bin=atob(m[2]),arr=new Uint8Array(bin.length);for(let q=0;q<bin.length;q++)arr[q]=bin.charCodeAt(q);const b=new Blob([arr],{type:m[1]});await IDB.set(id,b);if(CUSTOM_BG[id])URL.revokeObjectURL(CUSTOM_BG[id]);CUSTOM_BG[id]=URL.createObjectURL(b);delete BD[id];n++}catch(e){}}
+  toast(`Đã khôi phục ${n} ảnh nền.`);bgManager()};
+ inp.click();
+}
 
 // ===== MODAL =====
 function setupModal(){
@@ -1934,6 +2071,17 @@ document.addEventListener('click',e=>{
  else if(a==='upload')doUpload(id);
  else if(a==='share')openShare(id);
  else if(a==='vsw')setView(id);
+ else if(a==='bgmgr'){BGM.confirm=null;bgManager()}
+ else if(a==='bgclose')bgClose();
+ else if(a==='bgup')bgPickFile(id);
+ else if(a==='bgback'){BGE.img=null;bgManager()}
+ else if(a==='bgsave')bgSave();
+ else if(a==='bgdel'){BGM.confirm=id;bgManager()}
+ else if(a==='bgcancel'){BGM.confirm=null;bgManager()}
+ else if(a==='bgdelok')bgDelete(id);
+ else if(a==='bggo')bgGo(id);
+ else if(a==='bgexport')bgExport();
+ else if(a==='bgimport')bgImport();
  else if(a==='sndtoggle'){SND.on?sndStop():sndStart()}
  else if(a==='pzsay')plazaSay();
  else if(a==='pzzo')plazaZo();
