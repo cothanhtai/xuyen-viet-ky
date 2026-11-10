@@ -289,13 +289,15 @@ a.btn{text-decoration:none;display:inline-block}
 .bghead h1{font-size:24px}
 .bglist{display:flex;flex-direction:column;gap:6px}
 .bglist h3{margin:10px 0 2px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.bgrow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px}
-.bgthumb{width:96px;aspect-ratio:1.44;border-radius:6px;overflow:hidden;background:var(--surface-2);max-width:100%}
-.bgthumb img,.bgthumb svg{width:100%;height:100%;object-fit:cover;display:block}
+.bgrow{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px}
+.bgname{flex:1 1 140px;min-width:0}
+.bgsync{display:flex;flex-direction:column;gap:6px;align-items:flex-start;background:var(--sun-soft);border:1px solid var(--sun);border-radius:10px;padding:12px;font-size:13.5px}
+.bgthumb{flex:none;width:96px;height:67px;border-radius:6px;overflow:hidden;background:var(--surface-2);position:relative}
+.bgthumb img,.bgthumb svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .bgname b{display:block;font-size:14.5px}
 .bgname span{font-size:12px;color:var(--muted)}
 .bgname span.ok{color:var(--jade);font-weight:700}
-.bgact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.bgact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
 .bgact .btn{padding:6px 10px;font-size:13px}
 .btn.danger{background:var(--red)}
 .bgfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;border-top:1px solid var(--line);padding-top:12px}
@@ -306,7 +308,7 @@ a.btn{text-decoration:none;display:inline-block}
 .bgctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
 .bgctl label[for=bgzoom]{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .bgctl input[type=range]{flex:1;min-width:160px;accent-color:var(--jade)}
-@media (max-width:560px){.bgrow{grid-template-columns:72px minmax(0,1fr)}.bgthumb{width:72px}.bgact{grid-column:1 / -1;justify-content:flex-start}}
+@media (max-width:560px){.bgthumb{width:80px;height:56px}.bgact{flex-basis:100%;margin-left:0;justify-content:flex-start}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1701,6 +1703,71 @@ Object.assign(SCN,{
   R(250,120,4,30,'#6B4A2B')+R(234,112,60,14,'#7A5530','rx="2"')+SVT(264,122,7,'ĐỊA ĐẠO CỦ CHI','#FFF3C4'),
 });
 
+// ===== CITY TOUR HÀ NỘI =====
+Object.assign(SPOTS,{
+ 'hn.hoankiem':{n:'Hồ Hoàn Kiếm',p:'Hà Nội',parent:'hanoi',sub:'Tháp Rùa · cầu Thê Húc',F:[['Kem Tràng Tiền',15000],['Cà phê trứng',35000]],al:['hoan kiem','ho guom','thap rua','ho hoan kiem','the huc']},
+ 'hn.phoco':{n:'Phố cổ Hà Nội',p:'Hà Nội',parent:'hanoi',sub:'36 phố phường',F:[['Phở bò',55000],['Bún chả',50000]],al:['pho co','36 pho','hang dao','hang ma']},
+ 'hn.vanmieu':{n:'Văn Miếu – Quốc Tử Giám',p:'Hà Nội',parent:'hanoi',sub:'Trường đại học đầu tiên',F:[['Bánh cuốn',40000],['Chè bốn mùa',25000]],al:['van mieu','quoc tu giam','khue van cac']},
+ 'hn.badinh':{n:'Quảng trường Ba Đình',p:'Hà Nội',parent:'hanoi',sub:'Quận Ba Đình',F:[['Bánh mì pate',25000],['Trà đá',5000]],al:['ba dinh','quang truong ba dinh','quang truong']},
+ 'hn.motcot':{n:'Chùa Một Cột',p:'Hà Nội',parent:'hanoi',sub:'Đài sen giữa hồ',F:[['Chè sen',30000],['Bánh cốm',25000]],al:['mot cot','chua mot cot']},
+ 'hn.hotay':{n:'Hồ Tây – chùa Trấn Quốc',p:'Hà Nội',parent:'hanoi',sub:'Ngôi chùa cổ nhất Hà Nội',F:[['Bánh tôm Hồ Tây',45000],['Ốc luộc',60000]],al:['ho tay','tran quoc','chua tran quoc']},
+ 'hn.nhahat':{n:'Nhà hát Lớn Hà Nội',p:'Hà Nội',parent:'hanoi',sub:'Kiến trúc Pháp · 1911',F:[['Bánh mì',25000],['Nước mía',15000]],al:['nha hat lon','nha hat']},
+ 'hn.longbien':{n:'Cầu Long Biên',p:'Hà Nội',parent:'hanoi',sub:'Cầu sắt trên sông Hồng',F:[['Ngô nướng',15000],['Khoai lang nướng',15000]],al:['long bien','cau long bien','song hong']},
+ 'hn.duongtau':{n:'Phố đường tàu',p:'Hà Nội',parent:'hanoi',sub:'Tham quan ảo',F:[['Cà phê muối',35000],['Nem chua rán',40000]],al:['duong tau','pho duong tau','pho tau']},
+ 'hn.hoangthanh':{n:'Hoàng thành Thăng Long',p:'Hà Nội',parent:'hanoi',sub:'Cột cờ Hà Nội · Đoan Môn',F:[['Bún thang',50000],['Xôi xéo',25000]],al:['hoang thanh','thang long','cot co','doan mon']},
+});
+TOURS.hanoi={n:'City tour Hà Nội',stops:['hn.hoankiem','hn.phoco','hn.vanmieu','hn.badinh','hn.motcot','hn.hotay','hn.nhahat','hn.longbien','hn.duongtau','hn.hoangthanh']};
+for(const id in SPOTS)ALIAS[id]=SPOTS[id].al;
+Object.assign(ST,{
+ 'hn.phoco':{n:'Phố cổ · nhịp rao hàng',bpm:104,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17],roots:[130.81,174.61,196,130.81],lead:'pluck',lp:[.65,.35],bass:'sine',dr:{mo:[2,6],shaker:[1,3,5,7],clap:[7]},echo:.15},
+ 'hn.vanmieu':{n:'Văn Miếu · đàn tranh cổ kính',bpm:66,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17],roots:[130.81,196,174.61,130.81],lead:'pluck',lp:[.55,.12],bass:'sine',dr:{gong:[0],mo:[4]},echo:.35},
+ 'hn.badinh':{n:'Ba Đình · sáo trang trọng',bpm:64,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16],roots:[146.83,196,220,146.83],lead:'flute',lp:[.45,.1],bass:'pad',dr:{},echo:.35},
+ 'hn.motcot':{n:'Chùa Một Cột · chuông mõ thanh tịnh',bpm:60,steps:8,base:261.63,deg:[0,2,5,7,9,12,14],roots:[130.81,130.81,110,130.81],lead:'flute',lp:[.4,.08],bass:'drone',dr:{gong:[0],mo:[2,6]},echo:.45},
+ 'hn.hotay':{n:'Hồ Tây · hoàng hôn bên chùa',bpm:66,steps:8,base:293.66,deg:[0,2,5,7,9,12,14,17],roots:[146.83,196,146.83,130.81],lead:'pluck',lp:[.5,.12],bass:'pad',dr:{gong:[0],mo:[4]},amb:'waves',echo:.4},
+ 'hn.nhahat':{n:'Nhà hát Lớn · valse cổ điển',bpm:92,steps:6,base:261.63,deg:[0,2,4,5,7,9,11,12,14,16],roots:[130.81,174.61,196,130.81],lead:'piano',lp:[.75,.3],bass:'waltz',dr:{},echo:.3},
+ 'hn.longbien':{n:'Long Biên · chiều sông Hồng',bpm:76,steps:8,base:220,deg:[0,3,5,7,10,12,15],roots:[110,98,110,130.81],lead:'flute',lp:[.5,.15],bass:'sine',dr:{tom:[0,4]},amb:'waves',echo:.3},
+ 'hn.duongtau':{n:'Phố đường tàu · cà phê lo-fi',bpm:84,steps:8,base:220,deg:[0,3,5,7,10,12,15,17],roots:[110,87.31,130.81,98],lead:'piano',lp:[.45,.2],bass:'pad',dr:{kick:[0,5],clap:[2,6],hat:[0,1,2,3,4,5,6,7]},echo:.2},
+ 'hn.hoangthanh':{n:'Hoàng thành · trống hội',bpm:90,steps:8,base:261.63,deg:[0,2,5,7,9,12,14],roots:[130.81,130.81,98,130.81],lead:'flute',lp:[.45,.2],bass:'sine',dr:{tom:[0,3,6],gong:[0]},echo:.2},
+});
+const roofC=(x,y,w,c)=>P(`M${x-6} ${y+10} Q${x} ${y+6} ${x+6} ${y} L${x+w-6} ${y} Q${x+w} ${y+6} ${x+w+6} ${y+10} Z`,c);
+Object.assign(SCN,{
+ 'hn.hoankiem':()=>R(0,108,400,44,'#5FA3A8')+hump(-30,120,40,112,'#3E7D4E')+hump(310,130,46,112,'#3E7D4E')+
+  P('M150 122 Q200 104 250 122 Z','#4C8A55')+R(184,92,32,24,'#C9B48A')+roofC(182,86,36,'#8C3B2E')+R(190,74,20,14,'#C9B48A')+roofC(188,68,24,'#8C3B2E')+R(194,58,12,12,'#C9B48A')+P('M192 58 L200 46 L208 58 Z','#8C3B2E')+
+  [0,1,2].map(i=>R(189+i*8,98,5,9,'#7A6A4E','rx="2"')).join('')+
+  P('M70 140 Q110 108 150 138','none','stroke="#C8372D" stroke-width="5"')+[80,95,110,125,140].map(x=>R(x,124+Math.abs(x-110)/3,2,14,'#9A2A20')).join('')+
+  R(56,126,30,16,'#B9A27A')+roofC(52,118,38,'#8C3B2E')+R(0,152,400,38,'#9BB07E'),
+ 'hn.phoco':()=>[[0,'#E8C25A',70],[48,'#D98B4A',86],[96,'#EAD7A6',64],[144,'#C9A365',92],[192,'#E8C25A',74],[240,'#B8835A',88],[288,'#EAD7A6',70],[336,'#D98B4A',82]].map(([x,c,h])=>
+  R(x+2,150-h,46,h,c)+P(`M${x} ${150-h} L${x+25} ${138-h} L${x+50} ${150-h} Z`,'#8C4A2E')+R(x+10,160-h,12,14,'#5A7A8A','rx="2"')+R(x+28,160-h,12,14,'#5A7A8A','rx="2"')+R(x+6,178-h,38,3,'#5A3B22')+R(x+12,126,26,24,'#5A3416')+R(x+8,112,34,10,['#C8372D','#2E6DB4','#1E7A63'][x/48%3|0],'rx="2"')).join('')+
+  R(0,150,400,40,'#8A8F96')+`<g transform="translate(150,168)">${O(-14,4,8,'#222')}${O(18,4,8,'#222')}${P('M-24 -4 L-4 -20 L6 -20 L4 0 L-20 2 Z','#C8372D')}${R(4,-6,20,4,'#555')}${mini(14,-14)}</g>`,
+ 'hn.vanmieu':()=>R(0,140,400,50,'#9CC46A')+R(100,122,200,20,'#5FA3A8','rx="3"')+hump(-30,110,40,142,'#3E7D4E')+hump(320,110,44,142,'#3E7D4E')+
+  R(150,92,100,30,'#B9876A')+[0,1,2,3].map(i=>R(160+i*26,92,8,30,'#7A4E1E')).join('')+R(160,66,80,26,'#C8372D')+roofC(150,58,100,'#3A3A3A')+
+  [175,200,225].map(x=>O(x,79,7,'#F5C542','stroke="#7A4E1E" stroke-width="2"')).join('')+roofC(164,46,72,'#3A3A3A')+R(196,36,8,12,'#E3B23C')+
+  [70,100,300,330].map(x=>R(x,126,10,16,'#9AA0A6','rx="2"')+P(`M${x-4} 142 q9 -6 18 0 Z`,'#6B7280')).join(''),
+ 'hn.badinh':()=>R(0,120,400,70,'#7DB35A')+[...Array(10)].map((_,i)=>R(i*40+(i%2?0:20),128+(i%3)*18,30,10,'#8CC46A')).join('')+
+  [...Array(8)].map((_,i)=>P(`M${i*50+25} 190 L200 122`,'none','stroke="#E8E4D8" stroke-width="2"')).join('')+R(0,118,400,4,'#E8E4D8')+
+  hump(-20,130,40,120,'#2F6B4F')+hump(290,130,44,120,'#2F6B4F')+R(198,30,4,90,'#B9C3C7')+R(202,30,34,22,'#DA251D')+P('M219 36 l1.9 4.8 5.2.1 -4.1 3.1 1.5 5 -4.5-3 -4.5 3 1.5-5 -4.1-3.1 5.2-.1 Z','#FFDD00')+R(190,116,20,6,'#9AA0A6'),
+ 'hn.motcot':()=>R(0,118,400,72,'#5FA3A8')+[...Array(14)].map((_,i)=>O(20+i*28,140+(i%3)*12,7,'#3E8A4A')+(i%3===0?O(20+i*28,134+(i%3)*12,4,'#F29BB8'):'')).join('')+
+  hump(-30,120,40,120,'#3E7D4E')+hump(320,120,44,120,'#3E7D4E')+R(194,78,12,46,'#9AA0A6')+R(186,74,28,6,'#7A6A4E')+
+  R(178,52,44,22,'#C9A365')+roofC(170,44,60,'#7A3A2A')+P('M196 40 q4 -8 8 0','none','stroke="#E3B23C" stroke-width="2"')+R(100,96,60,4,'#9AA0A6')+[0,1,2,3].map(i=>R(104+i*14,100,3,20,'#9AA0A6')).join(''),
+ 'hn.hotay':()=>R(0,0,400,120,'#F2A65A','opacity=".35"')+R(0,112,400,50,'#4F94B0')+hump(-30,140,38,114,'#3E7D4E')+hump(300,140,36,114,'#3E7D4E')+
+  [...Array(9)].map((_,i)=>R(184+i*1.6,108-i*9,32-i*3.2,8,i%2?'#B8322A':'#C8483A')).join('')+R(197,22,6,10,'#F2F2F2')+O(200,20,4,'#F2F2F2')+
+  P('M150 112 L250 112 L240 120 L160 120 Z','#9A8A6A')+R(250,98,40,14,'#C9A66B')+roofC(246,90,48,'#2F6B4F')+boat(110,140,.7)+R(0,160,400,30,'#9BB07E'),
+ 'hn.nhahat':()=>R(0,140,400,50,'#C9B9A0')+hump(-30,110,40,142,'#3E7D4E')+hump(320,110,44,142,'#3E7D4E')+
+  R(90,80,220,60,'#F2E3B8')+R(170,60,60,80,'#F5EAC8')+P('M168 62 Q200 22 232 62 Z','#7D8FA3')+R(196,18,8,10,'#7D8FA3')+P('M90 82 L110 66 L170 66 L170 82 Z M230 82 L230 66 L290 66 L310 82 Z','#7D8FA3')+
+  [0,1,2,3].map(i=>R(176+i*14,100,6,40,'#E8D7A8')).join('')+P('M182 100 Q200 82 218 100 Z','#E8D7A8')+[0,1,2,3,4,5,6,7].map(i=>i>2&&i<5?'':R(100+i*26,92,12,22,'#8A6A4A','rx="6"')).join('')+R(90,136,220,4,'#D9C69A'),
+ 'hn.longbien':()=>R(0,104,400,48,'#B87D4F','opacity=".25"')+R(0,112,400,40,'#C9925A')+hump(-40,140,24,152,'#3E7D4E')+
+  R(0,92,400,8,'#6B4A3A')+[...Array(9)].map((_,i)=>P(`M${i*48} 92 Q${i*48+24} 56 ${i*48+48} 92`,'none','stroke="#7A5240" stroke-width="5"')+P(`M${i*48+24} 66 L${i*48+24} 92 M${i*48+6} 82 L${i*48+42} 82`,'none','stroke="#7A5240" stroke-width="2"')+R(i*48+20,100,8,52,'#6B4A3A')).join('')+
+  `<g transform="translate(130,90)">${R(0,-14,120,14,'#2E6B5A','rx="3"')}${[0,1,2,3,4,5].map(i=>R(6+i*19,-11,12,6,'#CFEAF5')).join('')}${R(116,-14,10,14,'#C8372D','rx="3"')}</g>`+
+  [40,70,330,360].map(x=>P(`M${x} 170 q-14 -30 -2 -50 M${x} 170 q12 -30 2 -50`,'none','stroke="#4E9A3A" stroke-width="6"')+R(x-2,150,4,22,'#6B8A3A')).join('')+R(0,165,400,25,'#9BB07E'),
+ 'hn.duongtau':()=>R(0,0,400,190,'#9FC7DA','opacity=".25"')+[[0,90,'#E8C25A'],[44,110,'#D98B4A'],[80,96,'#EAD7A6'],[300,96,'#C9A365'],[338,112,'#E8C25A'],[372,88,'#D98B4A']].map(([x,h,c])=>R(x,150-h,x<200?40:40,h,c)+R(x+8,160-h,10,12,'#5A7A8A')+R(x+22,160-h,10,12,'#5A7A8A')).join('')+
+  P('M120 190 L196 96 L204 96 L280 190 Z','#8A8F96')+P('M150 190 L198 96 M250 190 L202 96','none','stroke="#4A4A4A" stroke-width="3"')+[0,1,2,3,4,5,6].map(i=>{const t=i/6,y=100+t*88,w=6+t*90;return R(200-w/2,y,w,3,'#6B4A2B')}).join('')+
+  R(186,84,28,14,'#2E6B5A','rx="2"')+R(190,87,20,5,'#FFE27A')+[[110,170,'#D3352B'],[130,178,'#2E5DB0'],[270,172,'#D3352B'],[292,180,'#2E5DB0']].map(([x,y,c])=>R(x,y,10,8,c,'rx="2"')).join(''),
+ 'hn.hoangthanh':()=>R(0,140,400,50,'#C9B48A')+hump(-30,110,40,142,'#3E7D4E')+hump(320,110,44,142,'#3E7D4E')+
+  R(150,118,100,22,'#8A8070')+R(160,98,80,20,'#9A9080')+R(172,80,56,18,'#A89E8C')+R(190,34,20,46,'#B3A994')+R(186,28,28,8,'#8A8070')+[0,1,2].map(i=>R(194+i*5,44+i*10,3,5,'#5A5246')).join('')+
+  R(198,4,3,24,'#555')+R(201,4,22,14,'#DA251D')+P('M212 7.5 l1.3 3.3 3.5.1 -2.8 2.1 1 3.4 -3-2 -3 2 1-3.4 -2.8-2.1 3.5-.1 Z','#FFDD00')+R(176,124,48,16,'#5A5246','rx="8"')+
+  R(60,110,70,30,'#A8322A')+roofC(56,102,78,'#3A3A3A')+R(84,122,22,18,'#5A1A12','rx="9"'),
+});
+
 function ensureViewer(uid,name){
  uid=String(uid||name||'khach').slice(0,40);let e=PZ.byId['v:'+uid];
  if(!e){
@@ -1953,11 +2020,13 @@ function bgManager(){
  const n=Object.keys(CUSTOM_BG).length,total=allSpots().reduce((s,g)=>s+g.ids.length,0);
  bgModal(`<div class="modal"><div class="card bgmgr">
   <div class="bghead"><h1>Ảnh nền địa điểm</h1><button class="btn out" data-a="bgclose">Đóng</button></div>
-  <p class="lead">Đã có ảnh riêng: <b>${n}/${total}</b> địa điểm. Ảnh được lưu trong trình duyệt của máy này, dùng ngay khi LIVE. Nơi chưa có ảnh sẽ dùng hình vẽ sẵn.</p>
+  <p class="lead">Đã có ảnh riêng: <b>${n}/${total}</b> địa điểm. Ảnh tải lên ở đây <b>chỉ có trên máy này</b>, dùng ngay khi LIVE. Nơi chưa có ảnh sẽ dùng hình vẽ sẵn.</p>
+  <div class="bgsync"><b>Muốn mọi máy và điện thoại đều thấy ảnh?</b><span>Bấm <b>Tải bộ ảnh cho GitHub</b>, giải nén, rồi kéo thư mục <b>bg</b> vào trang Upload files của repo trên GitHub và bấm Commit. Khoảng 1–2 phút sau, ai mở link game cũng thấy ảnh mới.</span>
+   <button class="btn" data-a="bgzip" ${n?'':'disabled'}>Tải bộ ảnh cho GitHub (.zip)</button></div>
   <div class="bglist">${allSpots().map(g=>`<h3>${esc(g.g)}</h3>`+g.ids.map(id=>{const c=SP(id),has=!!CUSTOM_BG[id];
    const thumb=has?`<img src="${CUSTOM_BG[id]}" alt="">`:illus(id);
    const act=BGM.confirm===id?`<button class="btn out" data-a="bgcancel">Giữ lại</button><button class="btn danger" data-a="bgdelok" data-id="${id}">Xóa ảnh</button>`
-    :`<button class="btn out" data-a="bggo" data-id="${id}" title="Chuyển quán tới đây để xem">Xem</button>${has?`<button class="btn out" data-a="bgdel" data-id="${id}">Xóa</button>`:''}<button class="btn" data-a="bgup" data-id="${id}">${has?'Đổi ảnh':'Tải ảnh lên'}</button>`;
+    :`<button class="btn out" data-a="bggo" data-id="${id}" title="Chuyển quán tới đây để xem">Xem</button>${has?`<button class="btn out" data-a="bgjpg" data-id="${id}" title="Tải file ${id}.jpg để đưa lên GitHub">Tải JPG</button><button class="btn out" data-a="bgdel" data-id="${id}">Xóa</button>`:''}<button class="btn" data-a="bgup" data-id="${id}">${has?'Đổi ảnh':'Tải ảnh lên'}</button>`;
    return `<div class="bgrow"><div class="bgthumb">${thumb}</div><div class="bgname"><b>${esc(c.n)}</b><span class="${has?'ok':''}">${has?'Ảnh riêng':'Hình vẽ sẵn'}</span></div><div class="bgact">${act}</div></div>`}).join('')).join('')}</div>
   <div class="bgfoot"><span class="note">Đổi máy hoặc xóa dữ liệu trình duyệt sẽ mất ảnh. Nên sao lưu sau khi thêm ảnh.</span>
    <button class="btn out" data-a="bgexport" ${n?'':'disabled'}>Sao lưu bộ ảnh</button><button class="btn out" data-a="bgimport">Khôi phục</button></div>
@@ -1971,6 +2040,20 @@ function bgPickFile(id){
   const url=URL.createObjectURL(f),im=new Image();
   im.onload=()=>bgEditor(id,im,url);im.onerror=()=>{URL.revokeObjectURL(url);toast('Không đọc được ảnh này. Ảnh HEIC của iPhone hãy đổi sang JPG trước.')};im.src=url};
  inp.click();
+}
+// --- Xuất ảnh cho GitHub (thư mục bg/) ---
+function bgSaveFile(blob,name,msg){
+ if(DL){return DL.save({filename:name,data:blob}).then(()=>toast(msg),e=>toast(e&&e.code==='declined'?'Đã hủy.':'Không lưu được file ở đây.'))}
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast(msg);
+}
+async function bgJpg(id){try{const b=await IDB.get(id);if(!b)return toast('Chưa có ảnh.');bgSaveFile(b,id+'.jpg',`Đã tải ${id}.jpg. Đưa file này vào thư mục bg trên GitHub.`)}catch(e){toast('Không đọc được ảnh.')}}
+function loadJSZip(){return window.JSZip?Promise.resolve(window.JSZip):new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=()=>res(window.JSZip);s.onerror=rej;document.head.appendChild(s)})}
+async function bgZip(){
+ toast('Đang đóng gói ảnh…');let Z;try{Z=await loadJSZip()}catch(e){return toast('Không tải được công cụ nén. Dùng nút Tải JPG từng ảnh.')}
+ const z=new Z(),dir=z.folder('bg');let n=0;
+ for(const id of Object.keys(CUSTOM_BG)){try{const b=await IDB.get(id);if(b){dir.file(id+'.jpg',b);n++}}catch(e){}}
+ dir.file('DOC-TRUOC.txt','Keo CA THU MUC "bg" nay vao trang Upload files cua repo xuyen-viet-ky tren GitHub, roi bam Commit changes.\nTen file phai giu nguyen (vd: hcm.benthanh.jpg).\n');
+ const blob=await z.generateAsync({type:'blob'});bgSaveFile(blob,'anh-nen-github.zip',`Đã đóng gói ${n} ảnh. Giải nén rồi kéo thư mục bg lên GitHub.`);
 }
 // --- Trình căn chỉnh ảnh ---
 const BGE={id:null,img:null,url:null,z:1,x:0,y:0,s0:1,guides:true,drag:null};
@@ -2081,6 +2164,8 @@ document.addEventListener('click',e=>{
  else if(a==='bgdelok')bgDelete(id);
  else if(a==='bggo')bgGo(id);
  else if(a==='bgexport')bgExport();
+ else if(a==='bgjpg')bgJpg(id);
+ else if(a==='bgzip')bgZip();
  else if(a==='bgimport')bgImport();
  else if(a==='sndtoggle'){SND.on?sndStop():sndStart()}
  else if(a==='pzsay')plazaSay();
