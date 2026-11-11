@@ -2056,7 +2056,7 @@ function unload(){
  (LIVE.boarded||[]).forEach((b,i)=>setTimeout(()=>{if(PZ.phase!=='play'||PZ.byId[b.id])return;const e=addEnt({id:b.id,name:b.name,look:b.look,gift:b.gift});say(e,i%5===0?'Tới '+SP(PZ.city).n+' rồi!':'')},i*90));
  sfx('arrive');speak('Chào mừng tới '+SP(PZ.city).n);popText('Chào mừng tới '+SP(PZ.city).n,PZ.W/2,PZ.oy+30,{size:28,color:'#FFFFFF',bold:true,life:3,max:3,vy:-8});LIVE.dest=null;
  if(LIVE.finalRound){const t=TOURS[LIVE.cfg.tour];setTimeout(()=>{popText(`Đã đi hết ${t.stops.length} địa danh!`,PZ.W/2,PZ.oy+80,{size:26,color:'#F5C542',bold:true,life:3.5,max:3.5,vy:-6});confetti(90);
-  speak('Đã đi hết thành phố! Cả nhà gõ tên tỉnh để chọn nơi tiếp theo nhé');liveFeed('Hết tour! Gõ tên tỉnh để chọn nơi đi tiếp')},3200)}
+  speak('Đã đi hết thành phố! Cả nhà gõ tên điểm đến để chọn nơi tiếp theo nhé');liveFeed('Hết tour! Gõ tên điểm đến để chọn nơi đi tiếp')},3200)}
 }
 function drawLiveHUD(x){
  const W=PZ.W,c=SP(PZ.city);
@@ -2075,9 +2075,9 @@ function drawLiveHUD(x){
   const pill=(t,bg,fg)=>{x.font='700 13px "Be Vietnam Pro",system-ui,sans-serif';const w=x.measureText(t).width+20;rrect(x,20,py,w,24,12);x.fillStyle=bg;x.fill();x.fillStyle=fg;x.fillText(t,30,py+16.5);py+=30};
   pill(`${tour.n}: ${Math.min(LIVE.tourSeen.size,tour.stops.length)}/${tour.stops.length} địa danh`,'rgba(30,107,88,.9)','#FFFFFF');
   const tl=topLeave()[0],need=Math.max(2,+LIVE.cfg.leaveN||10);
-  if(LIVE.finalRound)pill('Hết tour! Gõ tên tỉnh để đi tiếp','rgba(179,38,30,.92)','#FFFFFF');
+  if(LIVE.finalRound)pill('Hết tour! Gõ tên điểm đến để đi tiếp','rgba(179,38,30,.92)','#FFFFFF');
   else if(tl)pill(`Rời TP đi ${SP(tl[0]).n}: ${tl[1]}/${need} người`,'rgba(179,38,30,.92)','#FFFFFF');
-  else pill(`Gõ tên tỉnh · đủ ${need} người là rời TP`,'rgba(20,22,26,.75)','#FCE7A0');}}
+  else pill(`Gõ tên điểm đến · đủ ${need} người là rời TP`,'rgba(20,22,26,.75)','#FCE7A0');}}
  if(SND.on&&SND.cfg.music){const st=stOf(PZ.city);if(st){x.font='600 13px "Be Vietnam Pro",system-ui,sans-serif';const t='♪ '+st.n,tw2=x.measureText(t).width+20;rrect(x,20,162,tw2,24,12);x.fillStyle='rgba(20,22,26,.7)';x.fill();x.fillStyle='#FCE7A0';x.fillText(t,30,178.5)}}
  rrect(x,W-230,92,210,64,10);x.fillStyle='rgba(20,22,26,.8)';x.fill();
  x.fillStyle='#BFC7C3';x.font='700 12px "Be Vietnam Pro",system-ui,sans-serif';x.fillText(PZ.phase==='play'?'XE CHẠY SAU':'ĐANG DI CHUYỂN',W-216,113);
@@ -2086,11 +2086,11 @@ function drawLiveHUD(x){
  const y0=PZ.oy+PZ.G*PZ.TH+128,h=PZ.H-y0-16;rrect(x,16,y0,W-32,h,14);x.fillStyle='rgba(12,18,16,.88)';x.fill();
  const col=(W-32)/2;
  x.fillStyle='#F5C542';x.font='800 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillText('CÁCH CHƠI',34,y0+30);
- const rules=[['Gõ bất kỳ','vào quán'],['"zô"','cùng nâng ly'],['tên món','gọi món ăn'],[TOURS[LIVE.cfg.tour]&&!LIVE.finalRound?'tên địa danh':'tên tỉnh','chọn điểm đến'],['"chụp"','check-in'],['Tặng quà','bao cả quán']];
+ const rules=[['Gõ bất kỳ','vào quán'],['"zô"','cùng nâng ly'],['tên món','gọi món ăn'],[TOURS[LIVE.cfg.tour]&&!LIVE.finalRound?'tên địa danh':'tên điểm đến','chọn nơi đi'],['"chụp"','check-in'],['Tặng quà','bao cả quán']];
  rules.forEach(([a,b],i)=>{const yy=y0+58+i*27;x.font='700 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#FFFFFF';x.fillText(a,34,yy);x.font='400 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#BFC7C3';x.fillText('→ '+b,140,yy)});
  const cx=16+col+14;x.fillStyle='#F5C542';x.font='800 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillText(LIVE.finalRound?'CHỌN TỈNH TIẾP THEO':'BÌNH CHỌN ĐIỂM ĐẾN',cx,y0+30);
  const tv=topVotes().slice(0,3),max=Math.max(1,...tv.map(v=>v[1]));
- if(!tv.length){x.font='400 14px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#BFC7C3';x.fillText(TOURS[LIVE.cfg.tour]&&!LIVE.finalRound?'Gõ tên địa danh, vd: Bến Thành, Bùi Viện':'Gõ tên tỉnh, vd: Huế, Đà Lạt',cx,y0+58)}
+ if(!tv.length){x.font='400 14px "Be Vietnam Pro",system-ui,sans-serif';x.fillStyle='#BFC7C3';x.fillText(TOURS[LIVE.cfg.tour]&&!LIVE.finalRound?'Gõ tên địa danh, vd: Bến Thành, Bùi Viện':'Gõ tên điểm đến, vd: Huế, Đà Lạt',cx,y0+58)}
  tv.forEach(([k,v],i)=>{const yy=y0+44+i*30,bw=col-60;rrect(x,cx,yy,bw,22,6);x.fillStyle='rgba(255,255,255,.08)';x.fill();rrect(x,cx,yy,Math.max(30,bw*v/max),22,6);x.fillStyle=i?'#2E9E7A':'#E8453C';x.fill();
   x.fillStyle='#FFFFFF';x.font='700 13px "Be Vietnam Pro",system-ui,sans-serif';x.fillText(SP(k).n,cx+8,yy+15.5);x.textAlign='right';x.fillText(String(v),cx+bw-8,yy+15.5);x.textAlign='left'});
  x.fillStyle='#F5C542';x.font='800 15px "Be Vietnam Pro",system-ui,sans-serif';x.fillText('MẠNH THƯỜNG QUÂN',cx,y0+150);
@@ -2102,7 +2102,7 @@ function drawLiveHUD(x){
 function liveEnter(){
  document.body.classList.add('is-live');stopPZ();roomLeave();
  const root=document.getElementById('liveRoot');
- const cities=`<optgroup label="Xuyên Việt · 16 tỉnh">${C.map(c=>`<option value="${c.id}" ${c.id===LIVE.cfg.start?'selected':''}>${esc(c.n)}</option>`).join('')}</optgroup>`+Object.entries(TOURS).map(([k,t])=>`<optgroup label="${esc(t.n)}">${t.stops.map(id=>`<option value="${id}" ${id===LIVE.cfg.start?'selected':''}>${esc(SPOTS[id].n)}</option>`).join('')}</optgroup>`).join('');
+ const cities=`<optgroup label="Xuyên Việt · 16 điểm đến">${C.map(c=>`<option value="${c.id}" ${c.id===LIVE.cfg.start?'selected':''}>${esc(c.n)}${(q=>q&&q!==c.n&&c.n!=='TP.HCM'?' – '+esc(q):'')((c.p||'').replace(/\s*\(.*\)/,'').replace(/^TP\.\s*/,''))}</option>`).join('')}</optgroup>`+Object.entries(TOURS).map(([k,t])=>`<optgroup label="${esc(t.n)}">${t.stops.map(id=>`<option value="${id}" ${id===LIVE.cfg.start?'selected':''}>${esc(SPOTS[id].n)}</option>`).join('')}</optgroup>`).join('');
  const inClaude=!!(window.claude&&window.claude.use);
  root.innerHTML=`<div class="lv"><div class="lvstage"><canvas id="lvcv" aria-label="Quán xuyên Việt đang LIVE"></canvas></div>
   <aside class="lvctl" id="lvctl">
@@ -2116,7 +2116,7 @@ function liveEnter(){
     <div class="lvrow"><input id="lvname" placeholder="Tên người xem" value="Mr. Tài" maxlength="16"><input id="lvmsg" placeholder="Bình luận, vd: zô, Huế, bún chả" maxlength="80"><button class="btn out" data-a="lvsend">Gửi</button></div>
     <div class="lvrow"><button class="btn out" data-a="lvgift">Giả lập tặng quà</button><button class="btn out" data-a="lvlike">Giả lập thả tim</button></div></section>
    <section><h3>3. Cài đặt</h3>
-    <div class="field"><label for="lvtour">Hành trình</label><select id="lvtour"><option value="off">Xuyên Việt · 16 tỉnh (người xem chọn tỉnh)</option>${Object.entries(TOURS).map(([k,t])=>`<option value="${k}">${esc(t.n)} · ${t.stops.length} địa danh</option>`).join('')}</select></div>
+    <div class="field"><label for="lvtour">Hành trình</label><select id="lvtour"><option value="off">Xuyên Việt · 16 điểm đến (người xem chọn nơi đi)</option>${Object.entries(TOURS).map(([k,t])=>`<option value="${k}">${esc(t.n)} · ${t.stops.length} địa danh</option>`).join('')}</select></div>
     <div class="lvrow"><div class="field"><label for="lvcity">Đang ở</label><select id="lvcity">${cities}</select></div>
     <div class="field"><label for="lvgoal">Mục tiêu zô</label><input id="lvgoal" type="number" min="2" max="50" value="${LIVE.cfg.goal}"></div>
     <div class="field"><label for="lvmins">Phút / chuyến</label><input id="lvmins" type="number" min="1" max="30" value="${LIVE.cfg.mins}"></div></div>
@@ -2148,7 +2148,7 @@ function liveEnter(){
  const tsel=document.getElementById('lvtour');tsel.value=TOURS[LIVE.cfg.tour]?LIVE.cfg.tour:'off';
  tsel.addEventListener('change',e=>{LIVE.cfg.tour=e.target.value;saveLiveCfg();const t=TOURS[e.target.value];
   if(t&&!t.stops.includes(PZ.city)){const first=t.stops[0];LIVE.cfg.start=first;saveLiveCfg();setCity(first);document.getElementById('lvcity').value=first}
-  LIVE.votes={};LIVE.voteT=LIVE.voteSec;tourReset();toast(t?'Đã bật '+t.n+'. Đủ '+LIVE.cfg.leaveN+' người gõ cùng một tỉnh thì xe rời thành phố; đi hết '+t.stops.length+' địa danh sẽ mở vòng chọn tỉnh.':'Đã chuyển về hành trình xuyên Việt 16 tỉnh.')});
+  LIVE.votes={};LIVE.voteT=LIVE.voteSec;tourReset();toast(t?'Đã bật '+t.n+'. Đủ '+LIVE.cfg.leaveN+' người gõ cùng một điểm đến thì xe rời thành phố; đi hết '+t.stops.length+' địa danh sẽ mở vòng chọn tỉnh.':'Đã chuyển về hành trình xuyên Việt 16 tỉnh.')});
  document.getElementById('lvcity').addEventListener('change',e=>{LIVE.cfg.start=e.target.value;saveLiveCfg();setCity(e.target.value);LIVE.votes={};LIVE.voteT=LIVE.voteSec;
   const t=TOURS[LIVE.cfg.tour];if(t&&!t.stops.includes(e.target.value)){LIVE.cfg.tour='off';saveLiveCfg();tsel.value='off'}tourReset()});
  document.getElementById('lvleave').addEventListener('change',e=>{LIVE.cfg.leaveN=Math.max(2,Math.min(500,Math.round(+e.target.value)||10));e.target.value=LIVE.cfg.leaveN;saveLiveCfg()});
@@ -2174,7 +2174,7 @@ const CUSTOM_BG={};
 async function loadCustomBgs(){try{for(const k of await IDB.keys()){const b=await IDB.get(k);if(b){CUSTOM_BG[k]=URL.createObjectURL(b);delete BD[k]}}}catch(e){}}
 loadCustomBgs();
 const BG_W=1440,BG_H=1000;
-function allSpots(){return [{g:'Xuyên Việt · 16 tỉnh',ids:C.map(c=>c.id)},...Object.values(TOURS).map(t=>({g:t.n,ids:t.stops}))]}
+function allSpots(){return [{g:'Xuyên Việt · 16 điểm đến',ids:C.map(c=>c.id)},...Object.values(TOURS).map(t=>({g:t.n,ids:t.stops}))]}
 function drawGuides(x){
  const box=(X,Y,w,h,l)=>{x.fillStyle='rgba(200,40,40,.38)';x.fillRect(X,Y,w,h);x.strokeStyle='#fff';x.lineWidth=3;x.strokeRect(X,Y,w,h);x.fillStyle='#fff';x.font='bold 24px sans-serif';x.textAlign='left';x.fillText(l,X+12,Y+32)};
  box(200,52,1040,104,'Banner "zô" (bị che)');box(40,184,600,316,'Ô tên địa điểm (bị che)');box(980,184,420,128,'Đồng hồ xe (bị che)');
