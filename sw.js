@@ -1,5 +1,5 @@
 // Xuyên Việt Ký - service worker
-const VERSION = 'xvk-v14';
+const VERSION = 'xvk-v15';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
