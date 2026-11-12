@@ -1619,7 +1619,7 @@ const LIVE={on:false,ws:null,wsOK:false,demo:false,demoT:0,zo:[],zoGoal:5,voteSe
  cfg:{url:'ws://localhost:21213/',goal:5,mins:3,start:'hanoi',tour:'off',leaveN:10},tourSeen:new Set(),finalRound:false,leave:{}};
 try{Object.assign(LIVE.cfg,JSON.parse(localStorage.getItem('xvk.live')||'{}'))}catch(e){}
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
-function matchCity(n){const t=' '+n+' ';for(const id in ALIAS)if(ALIAS[id].some(a=>t.includes(' '+a+' ')))return id;return null}
+function matchCity(n){const t=' '+n+' ',tr=TOURS[LIVE.cfg&&LIVE.cfg.tour],ids=tr&&!LIVE.finalRound?[...tr.stops,...Object.keys(ALIAS)]:Object.keys(ALIAS);for(const id of ids)if(ALIAS[id]&&ALIAS[id].some(a=>t.includes(' '+a+' ')))return id;return null}
 function matchDish(n){const c=SP(PZ.city),t=' '+n+' ';for(const f of c.F){const d=norm(f[0]);const w=d.split(' ').slice(0,2).join(' ');if(t.includes(' '+d+' ')||t.includes(' '+w+' '))return f[0]}return null}
 // ===== CITY TOUR: các địa danh trong một thành phố =====
 const SVT=(x,y,s,f,c,w=800,a='middle')=>`<text x="${x}" y="${y}" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" font-family="Be Vietnam Pro,system-ui,sans-serif">${f}</text>`;
@@ -1940,6 +1940,58 @@ Object.assign(SCN,{
   R(120,96,180,42,'#8E8A80')+roofC(110,82,200,'#3A3A40')+R(150,70,120,12,'#8E8A80')+roofC(140,58,140,'#3A3A40')+[0,1,2,3,4].map(i=>R(136+i*34,108,10,30,'#5A5246')).join('')+
   `<g transform="translate(102,138)">${R(-18,-40,36,40,'#9A9488')}${roofC(-26,-50,52,'#3A3A40')}${R(-12,-62,24,12,'#9A9488')}${roofC(-18,-70,36,'#3A3A40')}${R(-8,-24,16,24,'#3A2A1E','rx="8"')}</g>`+
   R(160,150,140,18,'#6FAFB5','rx="6"')+P('M210 60 V48 M206 52 H214','none','stroke="#3A3A3A" stroke-width="1.5"'),
+});
+// ===== CITY TOUR PHONG NHA =====
+Object.assign(SPOTS,{
+ 'pn.dongphongnha':{n:'Động Phong Nha',p:'Quảng Trị',parent:'phongnha',sub:'Đi thuyền trên sông Son vào hang',F:[['Cháo canh',30000],['Bánh bột lọc',30000]],al:['dong phong nha','phong nha','song son']},
+ 'pn.thienduong':{n:'Động Thiên Đường',p:'Quảng Trị',parent:'phongnha',sub:'Hoàng cung trong lòng đất',F:[['Gà đồi nướng',150000],['Khoai deo',30000]],al:['thien duong','dong thien duong']},
+ 'pn.hangen':{n:'Hang Én',p:'Quảng Trị',parent:'phongnha',sub:'Cửa hang khổng lồ · đàn chim én',F:[['Cá suối nướng',60000],['Rau rừng xào',40000]],al:['hang en']},
+ 'pn.songchay':{n:'Sông Chày – Hang Tối',p:'Quảng Trị',parent:'phongnha',sub:'Zipline · tắm bùn · kayak',F:[['Lẩu cá suối',150000],['Cơm lam nướng ống tre',30000]],al:['song chay','hang toi','zipline']},
+ 'pn.nuocmooc':{n:'Suối Nước Moọc',p:'Quảng Trị',parent:'phongnha',sub:'Suối xanh ngọc giữa rừng',F:[['Bánh xèo',40000],['Chè bột sắn',20000]],al:['nuoc mooc','suoi nuoc mooc','nuoc moc']},
+ 'pn.sondoong':{n:'Hang Sơn Đoòng',p:'Quảng Trị',parent:'phongnha',sub:'Hang động lớn nhất thế giới',F:[['Cơm nắm muối vừng',20000],['Cá suối nướng',60000]],al:['son doong','hang son doong']},
+});
+TOURS.phongnha={n:'City tour Phong Nha',stops:['pn.dongphongnha','pn.thienduong','pn.hangen','pn.songchay','pn.nuocmooc','pn.sondoong']};
+for(const id in SPOTS)ALIAS[id]=SPOTS[id].al;
+Object.assign(ST,{
+ 'pn.dongphongnha':{n:'Động Phong Nha · mái chèo vang hang',bpm:64,steps:8,base:220,deg:[0,3,5,7,10,12,15],roots:[110,98,110,87.31],lead:'pluck',lp:[.5,.12],bass:'drone',dr:{mo:[4]},amb:'drip',echo:.55},
+ 'pn.thienduong':{n:'Thiên Đường · chuông pha lê',bpm:62,steps:8,base:261.63,deg:[0,2,4,7,9,12,14,16],roots:[130.81,174.61,146.83,130.81],lead:'kim',lp:[.45,.1],bass:'pad',dr:{gong:[0]},amb:'drip',echo:.6},
+ 'pn.hangen':{n:'Hang Én · sáo phiêu lưu',bpm:84,steps:8,base:293.66,deg:[0,2,5,7,9,12,14,17],roots:[146.83,196,174.61,146.83],lead:'flute',lp:[.6,.25],bass:'sine',dr:{tom:[0,4]},amb:'waves',echo:.4},
+ 'pn.songchay':{n:'Sông Chày · zipline rộn ràng',bpm:118,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16],roots:[146.83,196,220,164.81],lead:'marimba',lp:[.65,.4],bass:'sine',dr:{kick:[0,4],tom:[2,6],shaker:[1,3,5,7]},amb:'waves',echo:.2},
+ 'pn.nuocmooc':{n:'Nước Moọc · suối reo',bpm:78,steps:8,base:293.66,deg:[0,2,5,7,9,12,14],roots:[146.83,196,146.83,130.81],lead:'pluck',lp:[.55,.2],bass:'sine',dr:{shaker:[1,5]},amb:'waves',echo:.3},
+ 'pn.sondoong':{n:'Sơn Đoòng · huyền bí lòng đất',bpm:56,steps:8,base:196,deg:[0,3,5,7,10,12,15],roots:[98,87.31,98,73.42],lead:'flute',lp:[.4,.08],bass:'drone',dr:{tom:[0],gong:[0]},amb:'drip',echo:.6},
+});
+const stal=(xs,y0,c)=>xs.map((x,i)=>P(`M${x-5} ${y0} L${x} ${y0+18+(i*13)%26} L${x+5} ${y0} Z`,c)).join('');
+const stag=(xs,base,c)=>xs.map((x,i)=>P(`M${x-6} ${base} L${x} ${base-16-(i*11)%24} L${x+6} ${base} Z`,c)).join('');
+const swallow=(x,y)=>P(`M${x-5} ${y-2} Q${x-2} ${y} ${x} ${y+1} Q${x+2} ${y} ${x+5} ${y-2}`,'none','stroke="#2A2A2A" stroke-width="1.3"');
+Object.assign(SCN,{
+ 'pn.dongphongnha':()=>R(0,0,400,190,'#1B2528')+P('M40 190 L40 90 Q200 10 360 90 L360 190 Z','#2C3B3E')+P('M70 190 L70 104 Q200 40 330 104 L330 190 Z','#3A4C4C')+
+  stal([90,118,146,176,206,236,266,296,318],44,'#7E8E86')+R(0,128,400,62,'#2E6F78')+P('M60 128 L340 128 L360 190 L40 190 Z','#3A8A92','opacity=".5"')+
+  [...Array(8)].map((_,i)=>P(`M${80+i*32} ${142+(i%3)*12} q8 -3 16 0`,'none','stroke="#9FDCE2" stroke-width="1.3"')).join('')+
+  [100,170,240,300].map(x=>O(x,104,10,'#FFD27A','opacity=".1"')).join('')+sampan(200,150,1.1),
+ 'pn.thienduong':()=>R(0,0,400,190,'#231C18')+P('M30 190 L30 80 Q200 0 370 80 L370 190 Z','#3A2F28')+stal([80,104,132,160,190,222,252,280,306,326],40,'#E8DFCC')+
+  stag([88,120,150,250,280,316],150,'#F2EBDD')+[...Array(7)].map((_,i)=>O(90+i*38,100+(i%2)*14,6,'#FFE9B0','opacity=".35"')).join('')+
+  P('M40 160 Q200 140 360 160 L360 168 Q200 148 40 168 Z','#8A5A33')+[...Array(13)].map((_,i)=>R(46+i*24,146-Math.round(Math.sin(i/12*3.14)*16),2,14,'#6B4423')).join('')+
+  P('M46 148 Q200 128 358 148','none','stroke="#6B4423" stroke-width="2"')+R(0,168,400,22,'#3A2F28'),
+ 'pn.hangen':()=>R(0,0,400,190,'#9FD3E8')+R(0,0,400,190,'#2B2522')+P('M60 190 L80 90 Q200 30 320 90 L340 190 Z','#A9D8EA')+peaks([[60,150],[110,110],[160,128],[220,96],[280,124],[340,150]],'#4E8A57')+
+  P('M0 0 L400 0 L400 190 L340 190 L320 90 Q200 30 80 90 L60 190 L0 190 Z','#2B2522')+stal([96,124,276,304],80,'#4A403A')+
+  P('M90 190 Q200 150 310 190 Z','#E8D7A8')+R(150,166,100,14,'#3FA6A8','rx="7"')+`<g transform="translate(140,160)">${P('M-12 0 L0 -14 L12 0 Z','#E8792F')}${P('M-3 0 L0 -6 L3 0 Z','#8A3E14')}</g>`+
+  [[150,60],[170,70],[200,52],[230,64],[256,56],[184,84],[216,80]].map(([x,y])=>swallow(x,y)).join(''),
+ 'pn.songchay':()=>karst(-20,120,120,140,'#3E7A4A')+karst(80,90,100,140,'#4E8A57')+karst(250,110,110,140,'#447F4E')+karst(320,100,96,140,'#3E7A4A')+
+  P('M260 140 L260 110 Q290 88 320 110 L320 140 Z','#1E2420')+R(0,132,400,58,'#2FB3A6')+[...Array(9)].map((_,i)=>P(`M${20+i*44} ${150+(i%3)*12} q8 -3 16 0`,'none','stroke="#C8F5EE" stroke-width="1.4"')).join('')+
+  P('M60 50 L340 110','none','stroke="#444" stroke-width="1.4"')+`<g transform="translate(170,74)">${R(-1,0,2,10,'#444')}${mini(0,22)}</g>`+
+  `<g transform="translate(250,162)">${P('M-24 0 Q0 7 24 0 L20 -4 L-20 -4 Z','#E8352B')}${mini(0,-8)}${P('M-16 -14 L16 2','none','stroke="#333" stroke-width="1.5"')}</g>`+
+  `<g transform="translate(110,164)">${P('M-20 0 Q0 6 20 0 L16 -4 L-16 -4 Z','#F2C14E')}${mini(0,-8)}</g>`,
+ 'pn.nuocmooc':()=>R(0,0,400,190,'#BFE3F2')+peaks([[0,60],[80,40],[180,64],[260,36],[340,58],[400,44]],'#3E7A4A')+R(0,96,400,94,'#5E9A4E')+
+  P('M0 140 Q100 118 200 134 T400 122 L400 168 Q300 170 200 176 T0 172 Z','#36C2B4')+[...Array(9)].map((_,i)=>P(`M${10+i*46} ${148+(i%3)*8} q8 -3 16 0`,'none','stroke="#D6FBF6" stroke-width="1.4"')).join('')+
+  [[90,150,14],[150,164,10],[280,148,16],[320,166,10]].map(([x,y,r])=>P(`M${x-r} ${y} Q${x} ${y-r*1.2} ${x+r} ${y} Z`,'#8E9A96')).join('')+
+  P('M170 126 Q210 116 250 126','none','stroke="#C9A15F" stroke-width="5"')+[176,192,208,224,240].map(x=>R(x,112,2,14,'#8A6A3A')).join('')+P('M174 114 Q210 104 246 114','none','stroke="#8A6A3A" stroke-width="1.5"')+
+  pine(70,110,1.1)+pine(110,104,.9)+pine(300,108,1)+pine(340,112,1.2),
+ 'pn.sondoong':()=>R(0,0,400,190,'#141A18')+P('M150 50 Q200 40 250 50 L262 62 L138 62 Z','#CFEFF5')+
+  P('M20 190 L20 86 Q100 58 140 62 L260 62 Q300 58 380 86 L380 190 Z','#26302C')+P('M146 62 L254 62 L320 190 L80 190 Z','#FFF6C8','opacity=".14"')+
+  stal([80,100,120,280,300,320],70,'#4A5650')+R(0,150,400,40,'#2E3A30')+
+  [[120,150,1.1],[150,156,.9],[200,150,1.3],[245,154,1],[280,150,1.1]].map(([x,y,s])=>pine(x,y,s,'#2F6B3E')).join('')+
+  [[110,128,14],[170,124,18],[230,126,16],[290,130,12]].map(([x,y,r])=>O(x,y,r,'#3E8A4A')).join('')+R(0,112,400,20,'#DDEFEA','opacity=".08"')+
+  `<g transform="translate(330,170)">${mini(0,0)}</g>`+O(334,160,2,'#FFE14D'),
 });
 function ensureViewer(uid,name){
  uid=String(uid||name||'khach').slice(0,40);let e=PZ.byId['v:'+uid];
