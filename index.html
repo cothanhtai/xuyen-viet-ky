@@ -2039,6 +2039,56 @@ Object.assign(SCN,{
   R(86,66,228,6,'#C8372D')+R(120,76,160,12,'#2E6F78')+
   [[80,'#E8352B'],[150,'#F2C14E'],[230,'#2E8B57'],[300,'#3A7BD5']].map(([x,c])=>`<g transform="translate(${x},158)">${R(-26,-14,52,4,c)}${R(-24,-10,48,16,'#8A6A40')}${[-14,0,14].map(d=>P(`M${d-7} -12 L${d} -20 L${d+7} -12 Z`,'#E8D7A8')).join('')}</g>`).join(''),
 });
+// ===== CITY TOUR ĐÀ NẴNG =====
+Object.assign(SPOTS,{
+ 'dn.cauvang':{n:'Cầu Vàng – Bà Nà Hills',p:'TP. Đà Nẵng',parent:'danang',sub:'Đôi bàn tay đá giữa mây',F:[['Bánh mì Pháp',30000],['Cà phê sữa',30000]],al:['cau vang','ba na','ba na hills','golden bridge']},
+ 'dn.caurong':{n:'Cầu Rồng',p:'TP. Đà Nẵng',parent:'danang',sub:'Rồng phun lửa tối cuối tuần',F:[['Bánh tráng cuốn thịt heo',80000],['Kem bơ',25000]],al:['cau rong','rong phun lua','phun lua']},
+ 'dn.mykhe':{n:'Biển Mỹ Khê',p:'TP. Đà Nẵng',parent:'danang',sub:'Bãi cát trắng dài',F:[['Hải sản nướng',200000],['Gỏi cá Nam Ô',120000]],al:['my khe','bien my khe']},
+ 'dn.nguhanhson':{n:'Ngũ Hành Sơn',p:'TP. Đà Nẵng',parent:'danang',sub:'Động Huyền Không · làng đá Non Nước',F:[['Mì Quảng',40000],['Bánh xèo',40000]],al:['ngu hanh son','non nuoc','huyen khong','nui ngu hanh']},
+ 'dn.sontra':{n:'Sơn Trà – Chùa Linh Ứng',p:'TP. Đà Nẵng',parent:'danang',sub:'Tượng Quan Âm nhìn ra biển',F:[['Chè sắn',20000],['Nước mía',15000]],al:['son tra','linh ung','chua linh ung','quan am','ban dao son tra']},
+ 'dn.songhan':{n:'Cầu Sông Hàn – Chợ Hàn',p:'TP. Đà Nẵng',parent:'danang',sub:'Cầu quay về đêm · phố chợ',F:[['Bún chả cá',35000],['Bánh canh ruộng',30000]],al:['song han','cau song han','cho han','cau quay']},
+});
+TOURS.danang={n:'City tour Đà Nẵng',stops:['dn.cauvang','dn.caurong','dn.mykhe','dn.nguhanhson','dn.sontra','dn.songhan']};
+for(const id in SPOTS)ALIAS[id]=SPOTS[id].al;
+Object.assign(ST,{
+ 'dn.cauvang':{n:'Cầu Vàng · waltz trên mây',bpm:84,steps:6,base:261.63,deg:[0,2,4,7,9,11,12,14,16],roots:[130.81,174.61,196,130.81],lead:'piano',lp:[.6,.2],bass:'waltz',dr:{},amb:'waves',echo:.45},
+ 'dn.caurong':{n:'Cầu Rồng · đêm lửa sông Hàn',bpm:120,steps:8,base:261.63,deg:[0,2,4,7,9,12,14,16],roots:[130.81,174.61,196,220],lead:'marimba',lp:[.6,.4],bass:'sine',dr:{kick:[0,2,4,6],hat:[1,3,5,7],clap:[2,6]},echo:.2},
+ 'dn.mykhe':{n:'Mỹ Khê · nắng biển',bpm:104,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16],roots:[146.83,196,220,164.81],lead:'marimba',lp:[.65,.35],bass:'sine',dr:{shaker:[1,3,5,7],kick:[0,4]},amb:'waves',echo:.2},
+ 'dn.nguhanhson':{n:'Ngũ Hành Sơn · chuông trong động',bpm:62,steps:8,base:261.63,deg:[0,2,5,7,9,12,14],roots:[130.81,130.81,110,130.81],lead:'pluck',lp:[.45,.1],bass:'drone',dr:{gong:[0],mo:[2,6]},amb:'drip',echo:.55},
+ 'dn.sontra':{n:'Linh Ứng · sóng và chuông',bpm:64,steps:8,base:293.66,deg:[0,2,5,7,9,12,14,17],roots:[146.83,196,146.83,130.81],lead:'flute',lp:[.45,.12],bass:'pad',dr:{gong:[0]},amb:'waves',echo:.45},
+ 'dn.songhan':{n:'Sông Hàn · phố chợ về đêm',bpm:108,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16],roots:[146.83,196,220,164.81],lead:'marimba',lp:[.6,.35],bass:'sine',dr:{kick:[0,4],shaker:[1,3,5,7],mo:[2,6]},echo:.25},
+});
+const umb=(x,y,c)=>`<g transform="translate(${x},${y})">${R(-1,-18,2,18,'#7A5530')}${P('M-14 -16 Q0 -30 14 -16 Z',c)}</g>`;
+const thung=(x,y)=>`<g transform="translate(${x},${y})">${P('M-12 0 Q0 9 12 0 Z','#6B4A2B')}${P('M-12 0 Q0 -2 12 0','none','stroke="#3A2A1E" stroke-width="1.5"')}</g>`;
+Object.assign(SCN,{
+ 'dn.cauvang':()=>R(0,0,400,190,'#CFE6EE')+peaks([[0,90],[80,62],[170,84],[260,56],[340,80],[400,66]],'#7FA095')+peaks([[0,130],[100,108],[200,124],[300,104],[400,122]],'#4E7A5A')+cloudBand(150,.9)+
+  P('M70 100 Q200 70 330 100','none','stroke="#C99A2E" stroke-width="9"')+P('M70 96 Q200 66 330 96','none','stroke="#F2C14E" stroke-width="3"')+[...Array(12)].map((_,i)=>{const x=80+i*22,y=100-Math.sin((x-70)/260*3.14)*30;return R(x,y-12,1.5,10,'#B88A2A')}).join('')+
+  [140,250].map(x=>{const y=100-Math.sin((x-70)/260*3.14)*30;return `<g transform="translate(${x},${y+6})">${P('M-22 4 Q-26 -6 -18 -4 Q-14 -10 -8 -6 Q-2 -12 4 -6 Q10 -10 14 -4 Q22 -6 20 4 Q16 30 4 54 L-8 54 Q-18 30 -22 4 Z','#7E8A82')}${P('M-16 10 Q-6 18 14 10','none','stroke="#5E6A62" stroke-width="2"')}</g>`}).join('')+cloudBand(170,.95)+
+  P('M250 46 L340 70','none','stroke="#555" stroke-width="1"')+`<g transform="translate(300,58)">${R(-1,-6,2,6,'#555')}${R(-8,0,16,11,'#C8372D','rx="2"')}</g>`,
+ 'dn.caurong':()=>R(0,0,400,190,'#121B3A')+[[50,40],[120,50],[280,38],[340,56],[200,34]].map(([x,y])=>O(x,y,1.2,'#FFF')).join('')+R(0,140,400,50,'#1A3460')+
+  [...Array(12)].map((_,i)=>R(10+i*34,150+(i%3)*10,16,2,['#FFE14D','#FF5C8A','#5CE1FF'][i%3],'opacity=".6"')).join('')+
+  R(60,128,280,8,'#4A5A7A')+[90,150,210,270,320].map(x=>R(x,136,6,14,'#3A4A6A')).join('')+
+  '<g transform="translate(40,14) scale(.88)">'+P('M108 120 Q140 60 172 120 Q204 180 236 120 Q268 60 300 120 Q316 150 330 128','none','stroke="#F2C14E" stroke-width="9" stroke-linecap="round"')+
+  [...Array(10)].map((_,i)=>O(116+i*22,i%2?110:90,2,'#FFF3C4')).join('')+
+  `<g transform="translate(100,116)">${P('M8 4 L-12 -8 L-18 -4 L-14 8 Z','#F2C14E')}${O(-6,-2,2,'#C8372D')}${P('M-18 -4 Q-40 -16 -36 -2 Q-44 4 -34 8 Q-40 16 -18 4 Z','#FF7A1A')}${P('M-20 -2 Q-34 -8 -30 0 Q-34 6 -20 2 Z','#FFE14D')}</g></g>`,
+ 'dn.mykhe':()=>R(0,0,400,190,'#BFE6F5')+R(0,86,400,50,'#2BA3C8')+[...Array(9)].map((_,i)=>P(`M${10+i*46} ${100+(i%3)*10} q8 -3 16 0`,'none','stroke="#E6FBFF" stroke-width="1.4"')).join('')+
+  P('M0 132 Q100 124 200 130 T400 128 L400 190 L0 190 Z','#F3E3B8')+P('M0 132 Q100 124 200 130 T400 128','none','stroke="#FFFFFF" stroke-width="3"')+
+  karst(270,120,34,90,'#5E8C6A')+palm(76,170,1)+palm(326,172,.9)+
+  umb(130,160,'#E8352B')+umb(180,166,'#2E86DE')+umb(240,160,'#F2C14E')+umb(280,168,'#2E8B57')+thung(150,138)+thung(176,134)+thung(220,138)+boat(110,112,.5),
+ 'dn.nguhanhson':()=>R(0,0,400,190,'#CDE6EE')+karst(40,70,70,150,'#8AA08A')+karst(100,90,104,150,'#6E8A72')+karst(180,70,80,150,'#7E967E')+karst(240,90,96,150,'#6E8A72')+karst(310,70,64,150,'#8AA08A')+
+  `<g transform="translate(144,60)">${R(-10,-6,20,8,'#C8372D')}${roofC(-14,-12,28,'#5A4A3A')}</g>`+P('M270 150 L270 124 Q284 110 298 124 L298 150 Z','#2A2622')+O(284,134,8,'#FFE9B0','opacity=".3"')+
+  P('M150 150 L162 120 L150 100 L160 80 L150 66','none','stroke="#E8E2D2" stroke-width="2" stroke-dasharray="3 2"')+R(0,148,400,42,'#D8D2C6')+
+  [[90,'#F4F1EA'],[200,'#E8E2D6'],[310,'#F4F1EA']].map(([x,c])=>`<g transform="translate(${x},172)">${R(-8,-4,16,4,'#BDB6A8')}${R(-4,-22,8,18,c)}${O(0,-26,5,c)}</g>`).join(''),
+ 'dn.sontra':()=>R(0,0,400,190,'#C7E6F2')+R(0,110,400,80,'#2B8FB8')+[...Array(9)].map((_,i)=>P(`M${10+i*46} ${130+(i%3)*14} q8 -3 16 0`,'none','stroke="#E6FBFF" stroke-width="1.4"')).join('')+
+  P('M150 190 L170 120 Q230 70 320 96 Q380 110 400 140 L400 190 Z','#3E7A4A')+P('M200 190 L210 140 Q260 110 330 124 L360 190 Z','#4E8A57')+
+  `<g transform="translate(250,124)">${P('M-16 0 Q0 -8 16 0 Z','#F4F1EA')}${R(-12,0,24,6,'#E0DCD2')}${P('M-8 -2 L-10 -50 Q0 -56 10 -50 L8 -2 Z','#FAF8F2')}${O(0,-58,6,'#FAF8F2')}${P('M-6 -62 Q0 -70 6 -62','none','stroke="#E0DCD2" stroke-width="2"')}${P('M-10 -40 L-16 -24 M10 -40 L14 -30','none','stroke="#E0DCD2" stroke-width="2.5"')}</g>`+
+  `<g transform="translate(310,128)">${R(-18,-14,36,14,'#E3B23C')}${roofC(-24,-22,48,'#C8372D')}</g>`+pine(190,148,.9)+pine(350,140,1),
+ 'dn.songhan':()=>R(0,0,400,190,'#151E3E')+[[40,30],[100,46],[300,36],[360,50]].map(([x,y])=>O(x,y,1.2,'#FFF')).join('')+R(0,120,400,70,'#1C3762')+
+  [130,270].map(x=>R(x-3,52,6,70,'#C9D3E0')).join('')+[...Array(6)].map((_,i)=>P(`M130 56 L${70+i*10} 112 M130 56 L${140+i*10} 112 M270 56 L${210+i*10} 112 M270 56 L${280+i*10} 112`,'none','stroke="#9FB0C6" stroke-width=".8"')).join('')+
+  R(60,110,280,6,'#D0D8E4')+[...Array(15)].map((_,i)=>O(66+i*19,108,1.6,['#FFE14D','#5CE1FF','#FF5C8A'][i%3])).join('')+
+  [...Array(10)].map((_,i)=>R(70+i*28,128+(i%2)*10,14,2,['#FFE14D','#5CE1FF','#FF5C8A'][i%3],'opacity=".55"')).join('')+
+  `<g transform="translate(200,184)">${R(-80,-30,160,30,'#E9DCC0')}${R(-60,-42,120,12,'#C8372D')}${[...Array(6)].map((_,i)=>R(-70+i*24,-22,14,14,'#FFD27A')).join('')}</g>`,
+});
 function ensureViewer(uid,name){
  uid=String(uid||name||'khach').slice(0,40);let e=PZ.byId['v:'+uid];
  if(!e){
