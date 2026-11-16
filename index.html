@@ -1993,6 +1993,52 @@ Object.assign(SCN,{
   [[110,128,14],[170,124,18],[230,126,16],[290,130,12]].map(([x,y,r])=>O(x,y,r,'#3E8A4A')).join('')+R(0,112,400,20,'#DDEFEA','opacity=".08"')+
   `<g transform="translate(330,170)">${mini(0,0)}</g>`+O(334,160,2,'#FFE14D'),
 });
+// ===== CITY TOUR HUẾ =====
+Object.assign(SPOTS,{
+ 'hu.dainoi':{n:'Đại Nội – Hoàng thành Huế',p:'TP. Huế',parent:'hue',sub:'Ngọ Môn · Kinh thành nhà Nguyễn',F:[['Bún bò Huế',45000],['Chè cung đình',25000]],al:['dai noi','hoang thanh','ngo mon','kinh thanh']},
+ 'hu.thienmu':{n:'Chùa Thiên Mụ',p:'TP. Huế',parent:'hue',sub:'Tháp Phước Duyên bên sông Hương',F:[['Cơm chay Huế',50000],['Bánh ít lá gai',20000]],al:['thien mu','chua thien mu','phuoc duyen']},
+ 'hu.truongtien':{n:'Cầu Trường Tiền – Sông Hương',p:'TP. Huế',parent:'hue',sub:'Thuyền rồng nghe ca Huế',F:[['Cơm hến',25000],['Chè Huế',20000]],al:['truong tien','cau truong tien','song huong','ca hue','thuyen rong']},
+ 'hu.khaidinh':{n:'Lăng Khải Định',p:'TP. Huế',parent:'hue',sub:'Kiến trúc giao thoa Á – Âu',F:[['Bánh bèo',30000],['Bánh nậm',30000]],al:['khai dinh','lang khai dinh']},
+ 'hu.tuduc':{n:'Lăng Tự Đức',p:'TP. Huế',parent:'hue',sub:'Hồ Lưu Khiêm · thủy tạ thơ mộng',F:[['Nem lụi',50000],['Bánh khoái',40000]],al:['tu duc','lang tu duc','luu khiem']},
+ 'hu.dongba':{n:'Chợ Đông Ba',p:'TP. Huế',parent:'hue',sub:'Chợ lâu đời nhất đất cố đô',F:[['Mè xửng',40000],['Tôm chua',60000]],al:['dong ba','cho dong ba']},
+});
+TOURS.hue={n:'City tour Huế',stops:['hu.dainoi','hu.thienmu','hu.truongtien','hu.khaidinh','hu.tuduc','hu.dongba']};
+for(const id in SPOTS)ALIAS[id]=SPOTS[id].al;
+Object.assign(ST,{
+ 'hu.dainoi':{n:'Đại Nội · nhã nhạc cung đình',bpm:70,steps:8,base:261.63,deg:[0,2,5,7,9,12,14,17],roots:[130.81,196,174.61,130.81],lead:'flute',lp:[.55,.2],bass:'drone',dr:{gong:[0],tom:[0,4],mo:[6]},echo:.35},
+ 'hu.thienmu':{n:'Thiên Mụ · chuông chùa bên sông',bpm:58,steps:8,base:261.63,deg:[0,2,5,7,9,12,14],roots:[130.81,130.81,110,130.81],lead:'pluck',lp:[.4,.08],bass:'drone',dr:{gong:[0],mo:[2,6]},amb:'waves',echo:.5},
+ 'hu.truongtien':{n:'Sông Hương · ca Huế trên thuyền',bpm:66,steps:8,base:293.66,deg:[0,3,5,7,10,12,15,17],roots:[146.83,130.81,146.83,110],lead:'pluck',lp:[.55,.15],bass:'pad',dr:{mo:[4]},amb:'waves',echo:.45},
+ 'hu.khaidinh':{n:'Khải Định · đàn nguyệt trang nghiêm',bpm:68,steps:8,base:220,deg:[0,3,5,7,10,12,15],roots:[110,98,110,87.31],lead:'pluck',lp:[.5,.15],bass:'drone',dr:{gong:[0],tom:[4]},echo:.4},
+ 'hu.tuduc':{n:'Tự Đức · sáo trúc bên hồ',bpm:64,steps:8,base:293.66,deg:[0,2,5,7,9,12,14,17],roots:[146.83,196,174.61,146.83],lead:'flute',lp:[.45,.12],bass:'pad',dr:{},amb:'waves',echo:.45},
+ 'hu.dongba':{n:'Đông Ba · phố chợ rộn ràng',bpm:108,steps:8,base:293.66,deg:[0,2,4,7,9,12,14,16],roots:[146.83,196,220,164.81],lead:'marimba',lp:[.65,.35],bass:'sine',dr:{kick:[0,4],shaker:[1,3,5,7],mo:[2,6]},echo:.2},
+});
+const lotus=(xs,y)=>xs.map(x=>O(x,y,5,'#3E8A4A')+O(x+2,y-4,3,'#F29BB8')).join('');
+Object.assign(SCN,{
+ 'hu.dainoi':()=>R(0,134,400,56,'#C9B48A')+R(0,150,400,24,'#5FA3A8')+lotus([90,130,170,230,270,310],160)+
+  R(70,92,260,44,'#8A5A3E')+[...Array(13)].map((_,i)=>R(70+i*20,92,1,44,'#7A4A30')).join('')+[0,1,2].map(i=>R(150+i*40,108,20,28,'#2A1E16','rx="10"')).join('')+R(90,112,16,24,'#2A1E16','rx="8"')+R(294,112,16,24,'#2A1E16','rx="8"')+
+  R(120,74,160,18,'#C8372D')+[...Array(9)].map((_,i)=>R(124+i*19,76,3,16,'#8C2A20')).join('')+P('M106 76 L200 58 L294 76 Z','#E3B23C')+R(150,48,100,12,'#C8372D')+P('M138 50 L200 36 L262 50 Z','#E3B23C')+
+  P('M106 76 L100 70 M294 76 L300 70 M138 50 L132 45 M262 50 L268 45','none','stroke="#E3B23C" stroke-width="3"'),
+ 'hu.thienmu':()=>peaks([[0,100],[80,84],[200,96],[320,80],[400,96]],'#7EA88A')+R(0,110,400,34,'#6E9A5A')+R(0,144,400,46,'#4E95A8')+[...Array(8)].map((_,i)=>P(`M${20+i*50} ${158+(i%2)*14} q8 -3 16 0`,'none','stroke="#CFEFF5" stroke-width="1.4"')).join('')+'<g transform="translate(0,8)">'+
+  [...Array(7)].map((_,i)=>R(176+i*2.5,124-i*12,48-i*5,12,i%2?'#E9D7B4':'#F2E4C6')+P(`M${172+i*2.5} ${124-i*12} L${228-i*2.5} ${124-i*12} L${222-i*2.5} ${120-i*12} L${178+i*2.5} ${120-i*12} Z`,'#8C5A3A')).join('')+P('M195 44 L200 32 L205 44 Z','#C99A2E')+'</g>'+
+  `<g transform="translate(280,124)">${R(-26,-20,52,20,'#C8372D')}${roofC(-34,-30,68,'#5A4A3A')}</g>`+pine(110,124,1.1)+pine(140,126,.9)+pine(330,126,1),
+ 'hu.truongtien':()=>R(0,0,400,190,'#1A2346')+[[60,40],[110,56],[300,44],[350,60],[180,36],[240,50]].map(([x,y])=>O(x,y,1.2,'#FFF')).join('')+O(320,70,10,'#FFF3C4')+
+  R(0,112,400,78,'#1F3C66')+[...Array(6)].map((_,i)=>P(`M${40+i*54} 112 Q${67+i*54} 82 ${94+i*54} 112`,'none','stroke="#8FD3FF" stroke-width="3"')+P(`M${40+i*54} 112 L${94+i*54} 112`,'none','stroke="#8FD3FF" stroke-width="2"')).join('')+
+  [...Array(18)].map((_,i)=>O(44+i*17.5,100+Math.abs(Math.sin(i/3*3.14))*-12,1.6,['#FFE14D','#FF5C8A','#5CE1FF'][i%3])).join('')+
+  [...Array(6)].map((_,i)=>P(`M${40+i*54} 120 Q${67+i*54} 140 ${94+i*54} 120`,'none','stroke="#8FD3FF" stroke-width="1.5" opacity=".35"')).join('')+
+  `<g transform="translate(200,160)">${P('M-44 0 Q0 10 44 0 L40 -8 L-40 -8 Z','#C8372D')}${P('M40 -8 Q52 -18 48 -28 Q44 -20 36 -14 Z','#E3B23C')}${R(-24,-22,48,14,'#8C2A20')}${P('M-30 -22 L0 -32 L30 -22 Z','#E3B23C')}${O(-14,-15,3,'#FFE14D')}${O(14,-15,3,'#FFE14D')}</g>`+
+  [[110,170],[140,178],[270,172],[300,180]].map(([x,y])=>O(x,y,3,'#FFB347')+O(x,y,7,'#FFB347','opacity=".25"')).join(''),
+ 'hu.khaidinh':()=>peaks([[0,90],[90,60],[200,70],[310,56],[400,84]],'#5E8C6A')+R(0,150,400,40,'#8A9A6A')+
+  P('M150 190 L170 70 L230 70 L250 190 Z','#9A9690')+[...Array(12)].map((_,i)=>R(170-i*1.7,74+i*10,60+i*3.4,2,'#6E6A64')).join('')+
+  R(160,46,80,26,'#5E5C58')+P('M154 48 L200 34 L246 48 Z','#3E3C3A')+R(190,54,20,18,'#2A2826','rx="9"')+R(164,52,8,20,'#4A4844')+R(228,52,8,20,'#4A4844')+
+  [100,120,280,300].map((x,i)=>`<g transform="translate(${x},${146-(i%2)*8})">${R(-4,-16,8,16,'#7A7670')}${O(0,-19,4,'#7A7670')}</g>`).join('')+pine(80,150,1)+pine(330,150,1.1),
+ 'hu.tuduc':()=>pine(70,110,1.3)+pine(110,104,1)+pine(300,106,1.2)+pine(340,112,1)+R(0,112,400,22,'#7EAA6A')+R(0,130,400,60,'#5FA3A8')+lotus([90,120,280,310,330],170)+
+  `<g transform="translate(200,132)">${[...Array(7)].map((_,i)=>R(-40+i*13,0,2,16,'#5A3B22')).join('')}${R(-46,-4,92,6,'#8A5A33')}${R(-38,-24,76,20,'#C9A15F')}${[...Array(5)].map((_,i)=>R(-32+i*16,-20,8,14,'#7A4A2A')).join('')}${roofC(-50,-36,100,'#5A4A3A')}</g>`+
+  P('M0 140 L130 136','none','stroke="#E9D7B4" stroke-width="4"')+[...Array(7)].map((_,i)=>P(`M${30+i*50} ${180-(i%2)*10} q8 -3 16 0`,'none','stroke="#CFEFF5" stroke-width="1.3"')).join(''),
+ 'hu.dongba':()=>R(0,140,400,50,'#BFAE8E')+R(90,70,220,70,'#E9DCC0')+[...Array(6)].map((_,i)=>R(104+i*34,96,18,28,'#5A7A8A','rx="9"')).join('')+
+  R(170,44,60,30,'#E9DCC0')+P('M164 46 L200 32 L236 46 Z','#C8372D')+O(200,58,9,'#FFFFFF','stroke="#5A4A3A" stroke-width="2"')+P('M200 58 V52 M200 58 L204 60','none','stroke="#333" stroke-width="1.3"')+
+  R(86,66,228,6,'#C8372D')+R(120,76,160,12,'#2E6F78')+
+  [[80,'#E8352B'],[150,'#F2C14E'],[230,'#2E8B57'],[300,'#3A7BD5']].map(([x,c])=>`<g transform="translate(${x},158)">${R(-26,-14,52,4,c)}${R(-24,-10,48,16,'#8A6A40')}${[-14,0,14].map(d=>P(`M${d-7} -12 L${d} -20 L${d+7} -12 Z`,'#E8D7A8')).join('')}</g>`).join(''),
+});
 function ensureViewer(uid,name){
  uid=String(uid||name||'khach').slice(0,40);let e=PZ.byId['v:'+uid];
  if(!e){
