@@ -261,15 +261,10 @@ const ACH=[
  {id:'m1b',nm:'Tỷ phú chén inox',ds:'Tổng xin được 1 tỷ',ok:s=>s.total>=1e9},
  {id:'all',nm:'Đủ bộ đồ nghề',ds:'Mua mỗi món ít nhất 1 lần',ok:s=>UP.every(u=>(s.lv[u.id]||0)>0)},
 ];
-const BEG=["Lạy ông đi qua, lạy bà đi lại, cho con xin ít vía giàu, vía sang, vía đẹp trai!", "Lạy cô bác gần xa, cho con xin miếng lộc, con hứa không xài vô trà sữa... nhiều đâu!", "Một đồng không nhiều, mười đồng không ít, trăm đồng là con khóc luôn á!", "Chén inox sáng bóng đang chờ người tốt bụng nè!", "Xin không phải vì nghèo, xin vì đam mê!", "Tiền vô như nước sông Đà, tiền ra nhỏ giọt như cà phê phin!", "Cho con xin chút đỉnh, Nam Tào ghi sổ, Bắc Đẩu đóng mộc liền!", "Ai cho con một đồng, con chúc người đó cả năm không kẹt xe!", "Cuối tháng rồi, ví con với chén con giống nhau: trống trơn!", "Cho con xin ít vía giàu, con giữ giùm cho, hứa không làm mất!", "Cho con xin để mua vé số, trúng con chia đôi... à chia ba!", "Tiền ơi tiền à, mau mau vô chén, đừng để con chờ lâu!", "Đi ngang không cho cũng được, nhưng cười với con một cái nha!", "Chó Lu nhìn quý khách bằng ánh mắt long lanh nè, nỡ lòng nào đi luôn!", "Không có tiền lẻ thì cho tiền chẵn, con thối lại bằng nụ cười!"];
-const PITCH={"nu": ["{N} xinh đẹp ơi! Nhan sắc ăn đứt hoa hậu rồi, giờ cho em ăn thêm ổ bánh mì nha!", "Trời ơi {n} đi ngang mà em tưởng tiên giáng trần! Tiên cho em xin ít lộc đi!", "{N} cho em xin 1 ngàn, em khen {n} đẹp miễn phí nguyên năm!", "{N} cười một cái là chén em sáng bừng, cho thêm chút là sáng luôn tương lai!", "{N} xinh như mộng, chắc ví cũng dày như mộng ha?", "{N} ơi son đẹp quá trời! Cho em xin tiền mua ổ bánh mì thôi, hông mua son đâu!", "Gió đưa {n} tới đây là có duyên rồi, cho em xin chút lộc giữ duyên nha!"], "nam": ["{N} mạnh mẽ ơi! Tay to vậy chắc nắm được nhiều tiền lắm, chia em chút!", "{N} 6 múi ơi, cho em xin 1 múi... tiền thôi!", "{N} đẹp trai phong độ quá, cho em xin ít vía để mai em đẹp trai giống vậy!", "{N} ơi, đàn ông phải biết thương người yếu đuối... là em nè!", "{N} đi ngang làm vỉa hè rung chuyển, rung luôn cái ví ra chút đi!", "{N} cho em xin đi, em hứa không kể với vợ {n} đâu!", "{N} ngầu dữ vậy, chắc cho tiền cũng ngầu lắm ha!"], "ba": ["Con lạy {n}! {N} đi chậm thôi cho con xin chút lộc, con chúc {n} sống lâu trăm tuổi!", "{N} ơi, nhìn {n} trẻ như mới 18, cho con xin tiền mua kẹo nha!", "{N} ơi, con ngồi đây từ sáng, {n} thương con như cháu nội đi!", "{N} cho con xin, con hứa về ngoan, học giỏi, chăm làm!"], "ong": ["{N} ơi, {n} khỏe như trâu, cho con xin ít sức khỏe với ít tiền luôn!", "Con lạy {n}! {N} phong độ hơn mấy anh trẻ, cho con xin chút lộc nha!", "{N} ơi, hồi xưa chắc {n} cũng từng nghèo ha, thương con chút đi!", "{N} cho con xin, con chịu thua {n} ba ván cờ tướng liền!"], "x": ["{N} ơi, đi ngang cho tui xin ít vía giàu nha!", "{N} dễ thương quá, cho tui xin chút lộc lấy hên!", "Ê {n}! Chén còn trống chỗ nè, ghé chơi đi!", "{N} ơi, gõ !nam hay !nu cho tui biết đường mà khen nha!", "{N} ơi, cho tui xin một nụ cười, có tiền thì càng tốt!"]};
-const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
-const pitch=(role,n)=>pick(PITCH[role]||PITCH.x).replaceAll('{N}',cap(n)).replaceAll('{n}',n);
-
+const BEG=['Cho con xin ít vía giàu đi cô ơi!','Anh đẹp trai ơi, cho em xin 1 like... à nhầm, 1 ngàn!','Hôm nay con mới ăn có 3 bữa à...','Cho xin ít tiền mua trà sữa full topping!','Lòng tốt của bạn sẽ được ghi vào sổ Nam Tào!','Có tiền lẻ hông? Tiền chẵn cũng nhận luôn!','Chén còn trống chỗ nè, mời quý khách!','Cho con xin để mua vé số đổi đời!','Tiền đâu, tiền đâu, mau vô chén!','Xin không phải vì nghèo, xin vì đam mê!','Cuối tháng rồi, ai cũng nghèo như nhau mà...'];
 const GIVE=['Nè, cầm lấy mua bánh mì.','Thấy dễ thương nên cho nè.','Hôm nay chị trúng số, chia lộc!','Cho nè, nhớ cầu cho chị có bồ.','Thôi cho đó, đừng hát nữa!'];
 const NO=['Tui còn nghèo hơn bạn nữa!','Để chuyển khoản nha... (đợi hoài không thấy ting ting)','Cuối tháng rồi em ơi.','Hông có tiền lẻ, chỉ có nợ.','Lườm một cái rồi đi thẳng.','Tui đang xin bên kia đường nè!','Đưa tui cái chén, tui xin chung!'];
-const NAMES=[["Chị Lan Chi", "nu"], ["Chị Ngọc Hân", "nu"], ["Chị Minh Thư", "nu"], ["Chị Bé Na", "nu"], ["Chị Hai Bán Xôi", "nu"], ["Anh Tuấn Kiệt", "nam"], ["Anh Hải Đăng", "nam"], ["Anh Ba Xe Ôm", "nam"], ["Anh Shipper", "nam"], ["Anh Khoa Gym", "nam"], ["Bà Năm", "ba"], ["Bà Tư Bán Chè", "ba"], ["Ông Tám", "ong"], ["Ông Hai Lúa", "ong"]];
-const EMR={"nam": ["🚶‍♂️", "👨‍💼", "👨‍🍳", "👷‍♂️", "🕺", "🧔"], "nu": ["🚶‍♀️", "👩‍💼", "👩‍🍳", "💃", "👩‍🎓", "👩‍🎤"], "ba": ["👵"], "ong": ["👴"]};
+const NAMES=['Cô Tư','Chú Bảy','Bé Na','Anh Ba Xe Ôm','Minh Thư','Tuấn Kiệt','Bà Năm','Hải Đăng','Ngọc Hân','Dì Sáu','Khoa Pug','Lan Chi','Anh Shipper','Cô giáo Mai'];
 const PEOPLE=['🚶','🚶‍♀️','👵','👴','🧑‍💼','👩‍🎓','🧑‍🍳','👷','💃','🧑‍🎤'];
 
 const KEY='chen-inox-xin-via-v1';
@@ -293,7 +288,7 @@ muteBtn.onclick=()=>{muted=!muted;setMute();try{localStorage.setItem(KEY+'-mute'
 /* ui helpers */
 const scene=$('#scene');
 const float=(txt,x,y,color)=>{const el=document.createElement('div');el.className='float';el.textContent=txt;el.style.left=x+'px';el.style.top=y+'px';if(color)el.style.color=color;scene.appendChild(el);setTimeout(()=>el.remove(),1000)};
-let bubT;const say=t=>{const b=$('#bubble');b.textContent=t;b.classList.add('on');clearTimeout(bubT);bubT=setTimeout(()=>b.classList.remove('on'),Math.max(1800,t.length*55))};
+let bubT;const say=t=>{const b=$('#bubble');b.textContent=t;b.classList.add('on');clearTimeout(bubT);bubT=setTimeout(()=>b.classList.remove('on'),1800)};
 let toastT;const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('on'),2600)};
 const log=t=>{const d=new Date();S.log.unshift([d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'),t]);S.log=S.log.slice(0,40);if(tab==='log')renderLog()};
 
@@ -317,15 +312,14 @@ function spawnPasser(){
   const p=document.createElement('button');p.className='passer walk';p.textContent=pick(PEOPLE);p.setAttribute('aria-label','Người đi đường');
   const w=scene.clientWidth, dur=rnd(6,9)*1000, rtl=Math.random()<.5;
   const ask=document.createElement('span');ask.className='ask';ask.textContent='Xin!';
-  const who=pick(NAMES);p.dataset.role=who[1];p.textContent=pick(EMR[who[1]]);
-  const nm=document.createElement('span');nm.className='pnm';nm.textContent=who[0];
+  const nm=document.createElement('span');nm.className='pnm';nm.textContent=pick(NAMES);
   const em=document.createElement('span');em.className='pem';em.textContent=p.textContent;p.textContent='';
   p.append(ask,nm,em);if(!rtl)p.classList.add('flip');
   scene.appendChild(p);
   const from=rtl?w+10:-110, to=rtl?-110:w+10;
   const anim=p.animate([{left:from+'px'},{left:to+'px'}],{duration:dur,easing:'linear'});
   anim.onfinish=()=>p.remove();
-  p.addEventListener('click',ev=>{ev.stopPropagation();if(p.classList.contains('done'))return;p.classList.add('done');ask.remove();mood(null);say(pitch(p.dataset.role,nm.textContent));setTimeout(()=>askPerson(p),2300)});
+  p.addEventListener('click',ev=>{ev.stopPropagation();if(p.classList.contains('done'))return;p.classList.add('done');ask.remove();askPerson(p)});
 }
 function askPerson(p){
   const r=scene.getBoundingClientRect(), pr=p.getBoundingClientRect();const x=pr.left-r.left, y=pr.top-r.top-10;
